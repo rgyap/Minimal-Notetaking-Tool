@@ -13,41 +13,39 @@ public class Test {
 
 
     public static void main(String[] arg) {
-        BufferedReader reader;
-        ArrayList<ArrayList<Character>> lines = new ArrayList<ArrayList<Character>>();
+        ArrayList<ArrayList<Character>> lines = readFileLines("testtext.txt");
+        ArrayList<String> converts = conv(lines);
+        writeConvertedLines(converts, "output.txt");
+       
+    }
 
+    public static ArrayList<ArrayList<Character>> readFileLines(String filename) {
+        ArrayList<ArrayList<Character>> lines = new ArrayList<ArrayList<Character>>();
         try {
-            reader  = new BufferedReader(new FileReader("testtext.txt"));
+            BufferedReader reader = new BufferedReader(new FileReader(filename));
             String l;
-            while ((l = reader.readLine())  != null) {
+            while ((l = reader.readLine()) != null) {
                 ArrayList<Character> ch = new ArrayList<Character>();
                 char[] arr = l.toCharArray();
-                
                 for (char a : arr) {
                     ch.add(a);
                 }
-
                 lines.add(ch);
             }
             reader.close();
-
-
         } catch (IOException e) {
             System.out.println(e);
         }
-        
-        ArrayList<String> converts = conv(lines);        
 
-        for (String c : converts) {
-            System.out.println(c);
-        }
+        return lines;
+    }
 
+    public static void writeConvertedLines(ArrayList<String> convLines, String name) {
         try {
-            Files.write(Paths.get("output.txt"), converts);
+            Files.write(Paths.get(name), convLines);
         } catch (IOException e) {
             System.out.println(e);
         }
-        
     }
 
     public static ArrayList<String> conv(ArrayList<ArrayList<Character>> lines) {
@@ -132,7 +130,7 @@ public class Test {
 
     public static String lineFormatting(ArrayList<Character> s1, Stack<Integer> st) {
         ArrayList<Character> s = new ArrayList<>(s1);
-        String[] asts = new String[]{"<i>", "</i>", "<b>", "</b>", "<i><b>", "</b></i>", "<em>", "</em>"};
+        String[] asts = new String[]{"<i>", "</i>", "<b>", "</b>", "<i><b>", "</b></i>", "<em>", "</em>", "\\(", "\\)", "$$", "$$"};
         String res = "";
         
         // padding to not make Java angry with out-of-bounds exceptions
@@ -144,7 +142,9 @@ public class Test {
             // Delimiter
             if (s.get(i) == '\\') {
                 res = res + s.get(i+1);
-                i+=2;
+                //i+=2;
+                i+=1;
+                continue;
             } 
 
             // Bold and Italics
@@ -154,7 +154,8 @@ public class Test {
                 while ((ac < 3) && (s.get(i+ac) == '*')) {
                     ac++;
                 }
-                i += ac;
+                //i += ac;
+                i+= (ac-1);
                 if (st.contains(ac)) {
                     st.pop();
                     res = res + asts[2*ac-1];
@@ -163,24 +164,45 @@ public class Test {
                     res = res + asts[2*ac-2];
                 
                 }
+                continue;
             }
-
+            
             // Alternative Emphasis
             if (s.get(i) == '_') {
-                i++;
-                if (st.contains(4)) {
-                    st.pop();
-                    res = res + asts[7];
-                } else {
-                    st.push(4);
-                    res = res + asts[6];
+                
+                if (!(st.contains(5) || st.contains(6))) {
+                    //i++;
+                    if (st.contains(4)) {
+                        st.pop();
+                        res = res + asts[7];
+                    } else {
+                        st.push(4);
+                        res = res + asts[6];
+                    }
+                    continue;
                 }
             } 
 
-            res = res + s.get(i);
+            // MathJax preservation
+            if (s.get(i) == '$') {
+                int dc = 1; 
+                if (s.get(i+1) == '$') {
+                    dc++;
+                }
+                //i += dc;
+                i+=(dc-1);
+                int k = 4+dc;
+                if (st.contains(k)) {
+                    st.pop();
+                    res = res + asts[2*k-1];
+                } else {
+                    st.push(k);
+                    res = res + asts[2*k-2];
+                }
+                continue;
+            } 
 
-            
-            
+            res = res + s.get(i);
         } 
         return res;
 
