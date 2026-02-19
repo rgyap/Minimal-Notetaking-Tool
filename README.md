@@ -18,6 +18,7 @@ For the generated webpage, I hope to achieve the following:
     - a main navigation page
     - navigation page for each subdirectory of the main directory
     - page template for notes entries
+
 I wish to have said types to be fully customizable. By making them modular, I hope that such a process would be relatively painless.
 
 # What do you mean by "minimal"?
