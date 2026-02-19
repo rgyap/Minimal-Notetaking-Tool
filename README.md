@@ -22,6 +22,3 @@ I wish to create the smallest codebase I can to support all the functionality I 
 
 # Why Java?
 Because that is the language I'm most comfortable with. And I suppose it'd be nice for me to write this only once, even at the cost of potentially needing to debug everywhere. However, I might actually attempt to rewrite this in C someday.
-
-# This seems ambitious
-I'm just bored and curious.
