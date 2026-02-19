@@ -8,7 +8,7 @@ Nothing to show yet!
 This is essentially like a minimalist version of apps like [Obsidian](https://obsidian.md/). The only interface this requires is the Command Line Interface (CLI).
 
 The target basic workflow for now is as follows:
-- Create or edit Markdown note files in a specific directory using any text editor (for me, I am using Vim).
+- Create or edit Markdown note files in a specific directory using any text editor (for example, I am using Vim).
 - When satisfied with the content, use this tool to turn the Markdown files into HTML pages.
 - A local webpage would then be generated, containing links to the notes.
 
