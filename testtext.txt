@@ -1,11 +1,19 @@
-# MY FILE
+# Hello World
 
-This is text!
+Hi *this* is **a test**.
+Strange ***test***, I'd say.
 
-More *text*...
+## Hello World (2)
 
-#HASHTAG
-Even **more** text.
-This is ***BOLDDDDD*** text.
+More testing.
 
-# HA
+## Header.
+
+Even **more
+testing** can be done.
+
+### This is fine
+
+#### Maybe
+
+#

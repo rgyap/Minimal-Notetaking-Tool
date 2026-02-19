@@ -1,140 +1,190 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.Stack;
-import java.util.HashMap;
-
 
 public class Test {
 
-    //public static HashMap<String, Integer> OPS = new HashMap<>();
-   // OPS.put("*", 1);
-   // OPS.put("**", 2); 
 
     public static void main(String[] arg) {
         BufferedReader reader;
-        ArrayList<char[]> lines = new ArrayList<char[]>();
+        ArrayList<ArrayList<Character>> lines = new ArrayList<ArrayList<Character>>();
 
         try {
             reader  = new BufferedReader(new FileReader("testtext.txt"));
             String l;
             while ((l = reader.readLine())  != null) {
-                 lines.add(l.toCharArray());
+                ArrayList<Character> ch = new ArrayList<Character>();
+                char[] arr = l.toCharArray();
+                
+                for (char a : arr) {
+                    ch.add(a);
+                }
+
+                lines.add(ch);
             }
             reader.close();
 
 
         } catch (IOException e) {
-            System.out.println("ERROR!");
+            System.out.println(e);
         }
         
-        Stack<Integer> st = new Stack<>();
+        ArrayList<String> converts = conv(lines);        
 
-        for (int j = 0; j < lines.size(); j++) {
-            char[] s = lines.get(j); 
-            String res = ""; 
+        for (String c : converts) {
+            System.out.println(c);
+        }
 
-            if (s.length == 0) {
-                //res = res + "<br>";
-                //System.out.println(res);
-                continue;
-            } 
-
-            int hc = 0;
-
-            if (s[0] == '#') {
-                hc++;
-                if (s[1] == '#') {
-                    hc++;
-                    if (s[2] == '#') {
-                        hc++;
-                    }
-                }
-            }
-
-            if (s[hc] == ' ') {
-                 boolean headerize = false;
-                if (j == 0) {
-                    if (lines.get(1).length == 0) {
-                        headerize = true;
-                    } 
-                } else if (j > 0 && j < lines.size() - 1) {
-                   if ((lines.get(j-1).length == 0) && (lines.get(j+1).length == 0)) {
-                       headerize = true;
-                   }
-                } else {
-                    if (lines.get(lines.size()-2).length == 0) {
-                        headerize = true; 
-                    }
-                } 
-                
-                if (headerize) {
-                    res = "<h" + hc + ">" + res;
-                    for (int i = hc+1; i < s.length; i++) {
-                        res = res + s[i];
-                    }
-                    res = res + "</h"+hc+">";
-                    System.out.println(res);
-                    j++;
-                    continue;
-                }
-
-            }
-
-
-            for (int i = 0; i < s.length; i++) {
-            
-               if (s[i] == '*')  {
-                   if (s[i+1] == '*') {
-                       if (s[i+2] == '*') {
-                           i+=3;
-                           if (st.contains(3)) {
-                               st.pop();
-                               res = res + "</i></b>";
-                           } else {
-                               st.push(3);
-                               res = res + "<b><i>";
-                           } 
-
-                       } else { 
-                           i+=2;
-                           if (st.contains(2)) {
-                               st.pop();
-                               res = res + "</b>";
-                          
-                           } else {
-                               st.push(2);
-                               res = res + "<b>";
-                           }
-                       } 
-                   } else {
-                       i+=1;
-                       if (st.contains(1)) {
-                           st.pop();
-                           res = res + "</i>";
-                       } else {
-                           st.push(1);
-                           res = res + "<i>";
-                       }
-                   }
-                   
-                 }
-                res = res + s[i];
-                
-            } 
-
-            if ((j > 0) && (lines.get(j-1).length == 0)) {
-               res = "<p>" + res;
-            }  
-
-            if (((j < lines.size() - 1) && (lines.get(j+1).length == 0)) || (j==lines.size()-1)) {
-                res = res + "</p>";
-            }
-            System.out.println(res);
+        try {
+            Files.write(Paths.get("output.txt"), converts);
+        } catch (IOException e) {
+            System.out.println(e);
         }
         
     }
 
+    public static ArrayList<String> conv(ArrayList<ArrayList<Character>> lines) {
+        ArrayList<String> converts = new ArrayList<String>();
+        Stack<Integer> st = new Stack<>();
 
+        for (int j = 0; j < lines.size(); j++) {
+            ArrayList<Character> s = new ArrayList<>(lines.get(j)); 
+            
+            String res = ""; 
+
+            if (s.size()  == 0) {
+                continue;    
+            } 
+            
+            if (s.get(0) == '#') {
+                int[] toh = toHeaderize(lines, j);
+                if (toh[0] == 1) {
+                    int hc = toh[1];
+                    res = "<h" + hc + ">" + res;
+                    for (int i = hc+1; i < s.size(); i++) {
+                        res = res + s.get(i);
+                    }
+                    res = res + "</h"+hc+">";
+                    converts.add(res);
+                    j++;
+                    continue;
+                }
+            }
+            res = lineFormatting(s, st);
+
+            if (((j > 0) && (lines.get(j-1).size() == 0))) {
+               res = "<p>" + res;
+            }  
+
+            if (((j < lines.size() - 1) && (lines.get(j+1).size() == 0)) || (j==lines.size()-1)) {
+                res = res + "</p>";
+            }
+
+            if ((j < lines.size() - 1) && (lines.get(j+1).size() > 0)) {
+                res = res + "<br>";
+            } 
+
+            converts.add(res);
+        }
+
+        return converts;
+
+    }
+
+    public static int[] toHeaderize(ArrayList<ArrayList<Character>> lines, int index) {
+        int hc = 0;
+        int headerize = 0;
+        ArrayList<Character> s = new ArrayList<>(lines.get(index));
+
+        // padding to not make Java angry with out-of-bounds exceptions
+        s.add((char)0);
+
+        while (hc < 6 && s.get(hc) == '#') {
+            hc++;
+        }
+
+        if (s.get(hc) != ' ') {
+            return new int[]{0, 0};
+        } 
+
+        if (index == 0) {
+            if (lines.get(1).size() == 0) {
+                headerize = 1;
+            } 
+        } else if (index > 0 && index < lines.size() - 1) {
+            if ((lines.get(index-1).size() == 0) && (lines.get(index+1).size() == 0)) {
+                headerize = 1;
+            }
+        } else {
+            if (lines.get(lines.size()-2).size() == 0) {
+                headerize = 1; 
+            }
+        }
+        return new int[]{headerize, hc};
+    }
+
+    public static String lineFormatting(ArrayList<Character> s1, Stack<Integer> st) {
+        ArrayList<Character> s = new ArrayList<>(s1);
+        String[] asts = new String[]{"<i>", "</i>", "<b>", "</b>", "<i><b>", "</b></i>", "<em>", "</em>"};
+        String res = "";
+        
+        // padding to not make Java angry with out-of-bounds exceptions
+        s.add((char)0);
+        s.add((char)0);
+        s.add((char)0);
+        
+        for (int i = 0; i < s.size()-3; i++) {
+            // Delimiter
+            if (s.get(i) == '\\') {
+                res = res + s.get(i+1);
+                i+=2;
+            } 
+
+            // Bold and Italics
+            if (s.get(i) == '*') {
+                int ac = 0;
+
+                while ((ac < 3) && (s.get(i+ac) == '*')) {
+                    ac++;
+                }
+                i += ac;
+                if (st.contains(ac)) {
+                    st.pop();
+                    res = res + asts[2*ac-1];
+                } else {
+                    st.push(ac);
+                    res = res + asts[2*ac-2];
+                
+                }
+            }
+
+            // Alternative Emphasis
+            if (s.get(i) == '_') {
+                i++;
+                if (st.contains(4)) {
+                    st.pop();
+                    res = res + asts[7];
+                } else {
+                    st.push(4);
+                    res = res + asts[6];
+                }
+            } 
+
+            res = res + s.get(i);
+
+            
+            
+        } 
+        return res;
+
+    }
+
+    
 }
