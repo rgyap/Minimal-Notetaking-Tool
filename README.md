@@ -19,16 +19,16 @@ For the generated webpage, I hope to achieve the following:
     - navigation page for each subdirectory of the main directory
     - page template for notes entries
 
-I wish to have said types to be fully customizable. By making them modular, I hope that such a process would be relatively painless.
+I wish to have said types to be fully customizable. By making them modular, I hope that the customization process would be relatively painless.
 
 # What do you mean by "minimal"?
-I hope to have as little dependence on libraries as possible, only relying on a small codebase to support the functionality I would be creating. As I had put functionality as the prime priority, I wish not to create a UI for this (that's bloat imo); instead, one must rely on the CLI.
+I wish to create the smallest codebase I can to support all the functionality I want. As I had put functionality as the prime priority, I also wish not to create a UI for this (that's bloat imo); instead, the user must rely on the CLI to use this.
 
 # So, is this basically a glorified Markdown to HTML converter?
 **Yes.** No bloat - just writing notes and looking at pretty text!
 
 # Why Java?
-Because that is the language I'm most comfortable with. And I suppose it'd be nice for me to write this only once, even at the cost of potentially needing to debug everywhere. However, to actually minimize bloat, I am honestly considering to rewriting this in C once I get things down.
+Because that is the language I'm most comfortable with. And I suppose it'd be nice for me to write this only once, even at the cost of potentially needing to debug everywhere. However, I might actually attempt to rewrite this in C someday.
 
 # This seems ambitious
 I'm just bored and curious.
