@@ -29,6 +29,27 @@ public final class Convert {
                 continue;    
             } 
             
+            // images
+            if (s.get(0) == '!') {
+                if (j == 0 && j < lines.size()-1) {
+                    if (lines.get(1).size() == 0) {
+                        converts.add(processImage1(s) + processImage2(s));
+                        continue;
+                    }
+                } else if (j > 0 && j < lines.size()-1) {
+                    if (lines.get(j-1).size() == 0 && lines.get(j+1).size() == 0) {
+                        converts.add(processImage1(s) + processImage2(s));
+                        continue;
+                    }
+                } else if (j-1 >= 0) {
+                    if (lines.get(j-1).size() == 0) {
+                        converts.add(processImage1(s) + processImage2(s));
+                        continue;
+                    }
+                }
+            }
+            
+
 			// headings
             if (s.get(0) == '#') {
                 int[] toh = toHeaderize1(lines, j);
@@ -144,7 +165,79 @@ public final class Convert {
 
     }
 
-	public static boolean threeOrMoreLineCharacters(ArrayList<Character> s) {
+    private static String processImage1(ArrayList<Character> s) {
+        String imageName = "";
+        String imageAltText = "";
+
+        if (s.size() < 3) {
+            return "";
+        }
+
+        if (!(s.get(0) == '!') || !(s.get(1) == '[') || (s.get(2) == '[')) {
+            return "";
+        }
+
+        int k = 2;
+        for (; k < s.size(); k++) {
+            if (s.get(k) == ']') {
+                break;
+            }
+            imageAltText = imageAltText + s.get(k);
+        }
+        k++;
+        if (!(s.get(k) == '(') || !(s.get(s.size()-1) == ')')) {
+            return "";
+        }
+        k++;
+        for (; k < s.size()-1; k++) {
+            imageName = imageName + s.get(k);
+        }
+
+        String path = Find.findFile(Paths.get("./notes"), imageName);
+        String out = "<img src='"+path+"' alt='"+imageAltText+"'>";
+        return out;
+    }
+    
+    private static String processImage2(ArrayList<Character> s) {
+        // ![[imagename|width size in px or %]]
+        // For example, 
+        // ![[image.png|300]]
+        // ![[another.png|50%]]
+
+        String imageName = "";
+        String imageSize = "";
+
+        if (s.size() < 3) {
+            return "";
+        }
+        if (s.get(0) != '!' || s.get(1) != '[' || s.get(2) != '[') {
+            return "";
+        }
+        if (s.get(s.size()-1) != ']' || s.get(s.size()-2) != ']') {
+            return "";
+        }
+
+        int k=3;
+        for (; k < s.size(); k++) {
+            if (s.get(k) == '|') {
+                break;
+            }
+            imageName = imageName + s.get(k);
+        }
+        k++;
+        for(; k < s.size(); k++) {
+            if (s.get(k) == ']') {
+                break;
+            }
+            imageSize = imageSize + s.get(k);
+        }
+        
+        String path = Find.findFile(Paths.get("./notes"), imageName);
+        String out = "<img src='"+path+"' width='"+imageSize+"'>";
+        return out;
+    }
+
+	private static boolean threeOrMoreLineCharacters(ArrayList<Character> s) {
 		if (s.size() < 3) {
 			return false;
 		}
@@ -162,7 +255,7 @@ public final class Convert {
 		return false;
 	}
 
-    public static int[] toHeaderize1(ArrayList<ArrayList<Character>> lines, int index) {
+    private static int[] toHeaderize1(ArrayList<ArrayList<Character>> lines, int index) {
         int hc = 0;
         int headerize = 0;
         ArrayList<Character> s = new ArrayList<>(lines.get(index));
@@ -194,7 +287,7 @@ public final class Convert {
         return new int[]{headerize, hc};
     }
 	
-	public static int[] toHeaderize2(ArrayList<ArrayList<Character>> liness, int index) {
+	private static int[] toHeaderize2(ArrayList<ArrayList<Character>> liness, int index) {
 		 
         ArrayList<ArrayList<Character>> lines = new ArrayList<ArrayList<Character>>(liness);
 		char l = lines.get(index+1).get(0);
@@ -227,7 +320,7 @@ public final class Convert {
 		
 	}
 
-    public static String lineFormatting(ArrayList<Character> s1, Stack<Integer> st) {
+    private static String lineFormatting(ArrayList<Character> s1, Stack<Integer> st) {
         ArrayList<Character> s = new ArrayList<>(s1);
 		
 		/*

@@ -11,11 +11,8 @@ public class Main {
     public static void main(String[] args) throws IOException {
 
         Path sourceRoot = Paths.get("notes");
-        //Path targetRoot = Paths.get("temp");
         Path targetRoot = Paths.get("mainnotes"); 
 		
-		//Path tempFolder = Paths.get("temp");
-
         if (Files.exists(targetRoot)) {
             deleteContents(targetRoot);
         }
@@ -33,15 +30,19 @@ public class Main {
                     
                     String originalName = sourcePath.getFileName().toString();
 
+                    if (!(originalName.substring(originalName.length()-2).equals("md"))) {
+                        return;
+                    }
+
                     String newName = originalName.substring(0, originalName.length() - 3) + ".html";
 
                     Path targetPath = targetDir.resolve(newName);
 
-                    System.out.println("Processing " + sourcePath.toString());
+                    System.out.print("Processing " + sourcePath.toString() + "... ");
 					
 					Write.writeToHTML(sourcePath, targetPath);
 
-					System.out.println("Done. The HTML files are now in the 'mainnotes' folder.");
+					System.out.print("Done.\n");
                 }
 
             } catch (IOException e) {
@@ -49,39 +50,6 @@ public class Main {
                 e.printStackTrace();
             }
         });
-		/*
-        Files.walk(targetRoot).forEach(sourcePath -> {
-            try {
-                Path relativePath = targetRoot.relativize(sourcePath);
-
-                if (Files.isDirectory(sourcePath)) {
-                    Path targetPath = targetRoot2.resolve(relativePath);
-                    Files.createDirectories(targetPath);
-                } else {
-                    Path targetDir = targetRoot2.resolve(relativePath).getParent();
-                    Files.createDirectories(targetDir);
-
-                    String originalName = sourcePath.getFileName().toString();
-
-                    String newName = originalName.substring(0, originalName.length() - 8) + ".html";
-
-                    Path targetPath = targetDir.resolve(newName);
-                    
-                    System.out.println("Creating HTML document for " + sourcePath.toString());
-                    Write.writeToHTML(sourcePath, targetPath);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-
-   
-        Path tempFolder = Paths.get("temp");
-
-        if (Files.exists(tempFolder)) {
-            deleteContents(tempFolder);
-        }
-*/
          
     }
 

@@ -12,6 +12,7 @@ public final class Write {
         List<String> lines = Files.readAllLines(Path.of("./template/note_template.html"));
 		
 		String fileName = path.toString();
+
 		ArrayList<ArrayList<Character>> flines = Read.readFileLines(fileName);
         ArrayList<String> converts = Convert.conv(flines);
 		String insertContent = stringWithLines(converts);
