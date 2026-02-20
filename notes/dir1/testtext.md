@@ -1,5 +1,6 @@
 Introduction
 
+___
 
 # Hello World
 
@@ -53,10 +54,21 @@ _Sed $eu$ cursus_ augue, **a $rutrum$ nunc**.
 Vestibulum ante nibh, interdum vitae porta vel, dictum vitae sem. 
 Duis ex tortor, imperdiet eget turpis nec, ullamcorper ullamcorper elit. 
 Praesent vehicula purus nisi, at tincidunt ex imperdiet commodo. 
-
-```Cras vitae odio eget ante bibendum suscipit. Vestibulum ante ipsum primis 
-in faucibus orci luctus et ultrices posuere cubilia curae; Nulla fringilla 
-viverra libero in rhoncus. Pellentesque id quam sed felis luctus euismod id sed justo.```
+```
+def gcd(a, b):
+  while b > 0:
+    q = a 
+    a = b
+    b = q % b
+  return a
+```
+Maecenas eu semper ex, in dapibus lacus. 
+$$\begin{aligned}
+1 + 1 &= 100 - 98 \\
+&= 40 - 38 \\
+&= 2  
+\end{aligned}$$
+Nam at risus eget mauris dictum dignissim et vitae dolor. 
 
 ---
 

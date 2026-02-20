@@ -132,7 +132,9 @@ public final class Convert {
 			// add line breaks
 			
             if ((j < lines.size() - 1) && (lines.get(j+1).size() > 0)) {
-                res = res + "<br>";
+				if (!(st.contains(5) || st.contains(6) || st.contains(8))) {
+					res = res + "<br>";
+				}
             } 
 		
             converts.add(res);
