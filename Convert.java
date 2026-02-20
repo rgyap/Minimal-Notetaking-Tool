@@ -30,6 +30,7 @@ public final class Convert {
             } 
             
             // images
+            
             if (s.get(0) == '!') {
                 if (j == 0 && j < lines.size()-1) {
                     if (lines.get(1).size() == 0) {
@@ -51,38 +52,57 @@ public final class Convert {
             
 
 			// headings
+            
             if (s.get(0) == '#') {
-                int[] toh = toHeaderize1(lines, j);
-                if (toh[0] == 1) {
-                    int hc = toh[1];
-                    res = "<h" + hc + ">" + res;
-                    for (int i = hc+1; i < s.size(); i++) {
-                        res = res + s.get(i);
+                if (j == 0 && j < lines.size()-1) {
+                    if (lines.get(1).size() == 0) {
+                        converts.add(processHeader1(s));
+                        continue;
                     }
-                    res = res + "</h"+hc+">";
-                    converts.add(res);
-                    j++;
-                    continue;
+                } else if (j > 0 && j < lines.size()-1) {
+                    if (lines.get(j-1).size() == 0 && lines.get(j+1).size() == 0) {
+                        converts.add(processHeader1(s));
+                        continue;
+                    }
+                } else if (j-1 >= 0) {
+                    if (lines.get(j-1).size() == 0) {
+                        converts.add(processHeader1(s));
+                        continue;
+                    }
                 }
+
             } 
-			
-			// headings 2
-			if (j < lines.size() - 1) {
-				if (threeOrMoreLineCharacters(lines.get(j+1))) {
-					int[] toh = toHeaderize2(lines, j);
-					if (toh[0] == 1) {
-						int hc = toh[1];
-						res = "<h" + hc + ">" + res;
-						for (char c : s) {
-							res = res + c;
-						}
-						res = res + "</h"+hc+">";
-						converts.add(res);
-						j+=2;
-						continue;
-					}
-				}
-			}
+
+            if (j < lines.size() - 1) {
+                if (threeOrMoreLineCharacters(lines.get(j+1))) {
+                    int hc = 0;
+                    if (lines.get(j+1).get(0) == '-') {
+                        hc = 2;
+                    }
+                    if (lines.get(j+1).get(0) == '=') {
+                        hc = 1;
+                    }
+                    if (j == 0 && j+2 < lines.size() && hc > 0) {
+                        if (lines.get(j+2).size() == 0) {
+                            converts.add(processHeader2(s, hc));
+                            j+=2;
+                            continue; 
+                        }
+                    } else if (j > 0 && j+2 < lines.size() && hc > 0) {
+                        if (lines.get(j+2).size() == 0 && lines.get(j-1).size() == 0) {
+                            converts.add(processHeader2(s, hc));
+                            j+=2;
+                            continue; 
+                        }
+                    } else { 
+                        if (lines.get(j-1).size() == 0 && hc > 0) {
+                            converts.add(processHeader2(s, hc));
+                            j+=2;
+                            continue; 
+                        }
+                    }
+                }
+            }
 			
 			// horizontal lines
 			
@@ -255,70 +275,42 @@ public final class Convert {
 		return false;
 	}
 
-    private static int[] toHeaderize1(ArrayList<ArrayList<Character>> lines, int index) {
+    private static String processHeader1(ArrayList<Character> s) {
         int hc = 0;
-        int headerize = 0;
-        ArrayList<Character> s = new ArrayList<>(lines.get(index));
 
-        // padding to not make Java angry with out-of-bounds exceptions
-        s.add((char)0);
+        if (s.size() < 3) {
+            return "";
+        }
 
-        while (hc < 6 && s.get(hc) == '#') {
-            hc++;
+        for(; hc < s.size(); hc++) {
+            if (s.get(hc) != '#') {
+                break;
+            }
+            //hc++;
         }
 
         if (s.get(hc) != ' ') {
-            return new int[]{0, 0};
-        } 
-
-        if (index == 0) {
-            if (lines.get(1).size() == 0) {
-                headerize = 1;
-            } 
-        } else if (index > 0 && index < lines.size() - 1) {
-            if ((lines.get(index-1).size() == 0) && (lines.get(index+1).size() == 0)) {
-                headerize = 1;
-            }
-        } else {
-            if (lines.get(lines.size()-2).size() == 0) {
-                headerize = 1; 
-            }
+            return "";
         }
-        return new int[]{headerize, hc};
-    }
-	
-	private static int[] toHeaderize2(ArrayList<ArrayList<Character>> liness, int index) {
-		 
-        ArrayList<ArrayList<Character>> lines = new ArrayList<ArrayList<Character>>(liness);
-		char l = lines.get(index+1).get(0);
-		
-		if (!(l == '-' || l == '=' || l == '_')) {
-			return new int[]{0,0};
-		}
-		
-		int hc = 1;
-        int headerize = 0;
-		
-		if (l == '-' || l == '_') {
-			hc = 2;
-		}
 
-        // padding to not make Java angry with out-of-bounds exceptions
-        lines.add(null);
-		lines.add(null);
-		
-		if (index == 0) {
-            if (threeOrMoreLineCharacters(lines.get(1)) && lines.get(2).size() == 0) {
-                headerize = 1;
-            } 
-        } else if (index > 0 && index < lines.size() - 1) {
-            if ((lines.get(index-1).size() == 0) && threeOrMoreLineCharacters(lines.get(index+1))) {
-                headerize = 1;
-            }
-        } 
-        return new int[]{headerize, hc};
-		
-	}
+        //hc++;
+        String content = "";
+        for (int k = hc+1; k < s.size(); k++) {
+            content = content + s.get(k);
+        }
+
+        String out = "<h"+hc+">"+content+"</h"+hc+">";
+        return out;
+    }
+
+    private static String processHeader2(ArrayList<Character> s, int hc) {
+        String out = "";
+        for (char c : s) {
+            out = out + c;
+        }
+        out = "<h"+hc+">"+out+"</h"+hc+">";
+        return out;
+    }
 
     private static String lineFormatting(ArrayList<Character> s1, Stack<Integer> st) {
         ArrayList<Character> s = new ArrayList<>(s1);
