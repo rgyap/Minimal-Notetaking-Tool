@@ -11,8 +11,14 @@ public class Main {
     public static void main(String[] args) throws IOException {
 
         Path sourceRoot = Paths.get("notes");
-        Path targetRoot = Paths.get("temp");
-        Path targetRoot2 = Paths.get("mainnotes"); 
+        //Path targetRoot = Paths.get("temp");
+        Path targetRoot = Paths.get("mainnotes"); 
+		
+		//Path tempFolder = Paths.get("temp");
+
+        if (Files.exists(targetRoot)) {
+            deleteContents(targetRoot);
+        }
 
         Files.walk(sourceRoot).forEach(sourcePath -> {
             try {
@@ -27,22 +33,23 @@ public class Main {
                     
                     String originalName = sourcePath.getFileName().toString();
 
-                    String newName = originalName + ".temp";
+                    String newName = originalName.substring(0, originalName.length() - 3) + ".html";
 
                     Path targetPath = targetDir.resolve(newName);
 
                     System.out.println("Processing " + sourcePath.toString());
+					
+					Write.writeToHTML(sourcePath, targetPath);
 
-                    ArrayList<ArrayList<Character>> lines = ReadAndConvert.readFileLines(sourcePath.toString());
-                    ArrayList<String> converts = ReadAndConvert.conv(lines);
-                    ReadAndConvert.writeConvertedLines(converts, newName, targetPath); 
+					System.out.println("Done. The HTML files are now in the 'mainnotes' folder.");
                 }
 
             } catch (IOException e) {
+				System.out.println("Uh oh!");
                 e.printStackTrace();
             }
         });
-
+		/*
         Files.walk(targetRoot).forEach(sourcePath -> {
             try {
                 Path relativePath = targetRoot.relativize(sourcePath);
@@ -74,8 +81,8 @@ public class Main {
         if (Files.exists(tempFolder)) {
             deleteContents(tempFolder);
         }
-
-        System.out.println("Done. The HTML files are now in the 'mainnotes' folder.");
+*/
+         
     }
 
     public static void deleteRecursively(Path path) throws IOException {

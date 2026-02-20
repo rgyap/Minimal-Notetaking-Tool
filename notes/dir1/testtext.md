@@ -1,24 +1,27 @@
+Introduction
+
+
 # Hello World
+
 
 Lorem ipsum **_dolor_ sit amet**.
 consectetur **_adipiscing_** elit.
 
-Yes, _**emphasis**_.
-Nulla _**bibendum quis**_ justo hendrerit euismod.
+Nulla _**bibendum quis**_ justo _hendrerit_ euismod.
 
 Maecenas *tincidunt turpis* sed lorem **luctus semper**.
 Nunc ***in gravida orci***, ut placerat magna. 
 
 ## Hello World II
 
-More testing.
+More testing
 
-Etiam facilisis, odio nec consequat dapibus,
-ipsum dui fringilla mauris, vitae pretium ante ligula pulvinar nunc. 
+Etiam ___facilisis___, odio nec consequat dapibus,
+ipsum dui fringilla mauris, vitae pretium ante ligula pulvinar nunc.
 
-Maecenas a mollis enim. 
-Lorem ipsum dolor sit amet, 
-consectetur adipiscing elit. 
+> Maecenas a *mollis* enim. 
+> Lorem ipsum dolor $\frac{1+\sqrt{5}}{2}$ sit amet, 
+> consectetur **adipiscing** elit. 
 
 Maecenas aliquam 
 in metus vitae aliquam. 
@@ -51,9 +54,11 @@ Vestibulum ante nibh, interdum vitae porta vel, dictum vitae sem.
 Duis ex tortor, imperdiet eget turpis nec, ullamcorper ullamcorper elit. 
 Praesent vehicula purus nisi, at tincidunt ex imperdiet commodo. 
 
-Cras vitae odio eget ante bibendum suscipit. Vestibulum ante ipsum primis 
+```Cras vitae odio eget ante bibendum suscipit. Vestibulum ante ipsum primis 
 in faucibus orci luctus et ultrices posuere cubilia curae; Nulla fringilla 
-viverra libero in rhoncus. Pellentesque id quam sed felis luctus euismod id sed justo. 
+viverra libero in rhoncus. Pellentesque id quam sed felis luctus euismod id sed justo.```
+
+---
 
 Maecenas eu semper ex, in dapibus lacus. 
 Nam at risus eget mauris dictum dignissim et vitae dolor. 
@@ -61,4 +66,6 @@ Mauris dignissim turpis ipsum, at sollicitudin magna rhoncus et.
 In ac urna sit amet erat bibendum cursus ac in orci. 
 
 Sed placerat, metus nec aliquet dapibus, mauris lacus porttitor purus, vitae luctus mi leo vitae lacus. 
+#
+
 #
