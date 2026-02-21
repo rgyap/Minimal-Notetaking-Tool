@@ -1,12 +1,12 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
+//import java.io.BufferedReader;
+//import java.io.FileReader;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 
 import java.io.IOException;
-
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Stack;
 
@@ -18,11 +18,15 @@ public final class Convert {
     public static ArrayList<String> conv(ArrayList<ArrayList<Character>> lines) {
         ArrayList<String> converts = new ArrayList<String>();
         Stack<Integer> st = new Stack<>();
-
+		
+		// Conversion magic
+		// WARNING: HUGE function
+		
         for (int j = 0; j < lines.size(); j++) {
             ArrayList<Character> s = new ArrayList<>(lines.get(j)); 
             
-            String res = ""; 
+            String res = "";
+			String str = ""; // for general use for processing
 
             if (s.size()  == 0) {
 				converts.add("");
@@ -31,47 +35,25 @@ public final class Convert {
             
             // images
             
-            if (s.get(0) == '!') {
-                if (j == 0 && j < lines.size()-1) {
-                    if (lines.get(1).size() == 0) {
-                        converts.add(processImage1(s) + processImage2(s));
-                        continue;
-                    }
-                } else if (j > 0 && j < lines.size()-1) {
-                    if (lines.get(j-1).size() == 0 && lines.get(j+1).size() == 0) {
-                        converts.add(processImage1(s) + processImage2(s));
-                        continue;
-                    }
-                } else if (j-1 >= 0) {
-                    if (lines.get(j-1).size() == 0) {
-                        converts.add(processImage1(s) + processImage2(s));
-                        continue;
-                    }
-                }
-            }
+            //if (s.get(0) == '!') {
+			str = processImage1(s) + processImage2(s);
+			if (!str.equals("")) {
+				converts.add(str);
+				continue;
+			}
+            //}
             
 
 			// headings
-            
-            if (s.get(0) == '#') {
-                if (j == 0 && j < lines.size()-1) {
-                    if (lines.get(1).size() == 0) {
-                        converts.add(processHeader1(s));
-                        continue;
-                    }
-                } else if (j > 0 && j < lines.size()-1) {
-                    if (lines.get(j-1).size() == 0 && lines.get(j+1).size() == 0) {
-                        converts.add(processHeader1(s));
-                        continue;
-                    }
-                } else if (j-1 >= 0) {
-                    if (lines.get(j-1).size() == 0) {
-                        converts.add(processHeader1(s));
-                        continue;
-                    }
-                }
 
-            } 
+			str = processHeader1(s);
+			if (!str.equals("")) {
+				converts.add(str);
+				continue;
+			}
+
+			
+			// headings (alternative style)
 
             if (j < lines.size() - 1) {
                 if (threeOrMoreLineCharacters(lines.get(j+1))) {
@@ -82,25 +64,13 @@ public final class Convert {
                     if (lines.get(j+1).get(0) == '=') {
                         hc = 1;
                     }
-                    if (j == 0 && j+2 < lines.size() && hc > 0) {
-                        if (lines.get(j+2).size() == 0) {
-                            converts.add(processHeader2(s, hc));
-                            j+=2;
-                            continue; 
-                        }
-                    } else if (j > 0 && j+2 < lines.size() && hc > 0) {
-                        if (lines.get(j+2).size() == 0 && lines.get(j-1).size() == 0) {
-                            converts.add(processHeader2(s, hc));
-                            j+=2;
-                            continue; 
-                        }
-                    } else { 
-                        if (lines.get(j-1).size() == 0 && hc > 0) {
-                            converts.add(processHeader2(s, hc));
-                            j+=2;
-                            continue; 
-                        }
-                    }
+
+					if (hc > 0) {
+						converts.add(processHeader2(s, hc));
+                        j++;
+                        continue;
+					}
+						
                 }
             }
 			
@@ -110,24 +80,12 @@ public final class Convert {
 				boolean addHorizontalLine = false;
 				
 				if (threeOrMoreLineCharacters(s)) {
-					if (j == 0) {
-						if (lines.get(1).size() == 0) {
-							addHorizontalLine = true;
-						} 
-					} else if (j > 0 && j < lines.size() - 1) {
-						if ((lines.get(j-1).size() == 0) && (lines.get(j+1).size() == 0)) {
-							addHorizontalLine = true;
-						}
-					} else {
-						if (lines.get(lines.size()-2).size() == 0) {
-							addHorizontalLine = true; 
-						}
-					}
+					addHorizontalLine = true;
 				}
 				if (addHorizontalLine) {
 					res = res + "<hr>";
 					converts.add(res);
-					j++;
+
 					continue;
 				}
 			}
@@ -135,8 +93,15 @@ public final class Convert {
 			// formatting
             res = lineFormatting(s, st);
 			
-			// process paragraphs
+			// process blockquotes
 			
+			if (s.size() > 2 && s.get(0) == '>') {
+				converts.add(processBlockQuotes(lines, res, j));
+				continue;	
+			}
+			
+			// process paragraphs
+			/*
 			if (j == 0) {
 				res = "<p>" + res;
 			}
@@ -147,43 +112,76 @@ public final class Convert {
 			
 			if ((j < lines.size() - 1 && lines.get(j+1).size() == 0) || j==lines.size()-1) {
 				res = res + "</p>";
-			}
-			
-			// process blockquotes
-			
-			if (s.size() > 2) {
-				char[] arr = res.toCharArray();
-				int offset = 0;
-				String tag = res.substring(0, 3);
-				if (tag.equals("<p>")) {
-					offset = 3;
-				}
-				
-				if (arr[0+offset] == '>' && arr[1+offset] == ' ') {
-					res = res.substring(2+offset);
-					if (lines.get(j-1).size() == 0) {
-						res = "<blockquote>" + res;
-					} 
-					if (lines.get(j+1).size() == 0) {
-						res = res + "</blockquote>";
-					}
-				}
-			}
+			}*/
 			
 			// add line breaks
 			
             if ((j < lines.size() - 1) && (lines.get(j+1).size() > 0)) {
-				if (!(st.contains(5) || st.contains(6) || st.contains(8))) {
+				if (!(st.contains(5) || st.contains(6) || st.contains(8)) && !(res.substring(Math.max(res.length() - 2, 0)).equals("$$"))) {
 					res = res + "<br>";
 				}
-            } 
+            }
 		
             converts.add(res);
         }
+		
+		for (String convLine : converts) {
+			char[] arr = convLine.toCharArray();
+			String[] tags = {
+				"$$", "<h1>", "<h2>", "<h3>", "<h4>", "<h5>", "<h6>",
+				"<img>","<hr>", "<blockquote>"
+			}; 
+			HashSet<String> blacklistedTags = new HashSet<String>(Arrays.asList(tags));
+			if (
+		}
 
         return converts;
-
+	
     }
+	
+	private static String processBlockQuotes(ArrayList<ArrayList<Character>> lines, String in, int index) {
+		ArrayList<String> arr = new ArrayList<String>(Arrays.asList(in.split("")));
+		String out = "";
+		 
+		int k = 0;
+		while (arr.get(k).equals(">")) {
+			char prev = (char)0;
+			if (k < lines.get(index-1).size()) {
+				prev = lines.get(index-1).get(k);
+			}
+			
+			if (prev != '>') {
+				arr.set(k, "<blockquote>");
+			} else {
+				arr.set(k, "");
+			}
+			arr.remove(k+1);
+			k++;
+		}
+		 
+		int countNext = 0;
+		if (index < lines.size()-1) {
+			if (lines.get(index+1).size() > 0) {
+				while (lines.get(index+1).get(countNext) == '>') {
+					countNext++;
+				}
+			}
+		}
+		
+		if (k > countNext) {
+			if (k > 1) {
+				k--;
+			}
+			for (int k2 = 0; k2 < k; k2++) {
+				arr.add("</blockquote>");
+			}						
+		}
+		
+		for (int k3=0; k3 < arr.size(); k3++) {
+			out += arr.get(k3);
+		} 
+		return out;
+	}
 
     private static String processImage1(ArrayList<Character> s) {
         String imageName = "";
@@ -281,19 +279,21 @@ public final class Convert {
         if (s.size() < 3) {
             return "";
         }
+		
+		if (s.get(0) != '#') {
+            return "";
+        }
 
         for(; hc < s.size(); hc++) {
             if (s.get(hc) != '#') {
                 break;
             }
-            //hc++;
         }
 
         if (s.get(hc) != ' ') {
             return "";
         }
 
-        //hc++;
         String content = "";
         for (int k = hc+1; k < s.size(); k++) {
             content = content + s.get(k);

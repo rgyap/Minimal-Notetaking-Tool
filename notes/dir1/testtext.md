@@ -19,11 +19,9 @@ More testing
 
 Etiam ___facilisis___, odio nec consequat dapibus,
 ipsum dui fringilla mauris, vitae pretium ante ligula pulvinar nunc.
-
 > Maecenas a *mollis* enim. 
-> Lorem ipsum dolor $\frac{1+\sqrt{5}}{2}$ sit amet, 
+>>>>> Lorem ipsum dolor $\frac{1+\sqrt{5}}{2}$ sit amet, 
 > consectetur **adipiscing** elit. 
-
 Maecenas aliquam 
 in metus vitae aliquam. 
 
@@ -72,6 +70,9 @@ Nam at risus eget mauris dictum dignissim et vitae dolor.
 
 ---
 
+APPENDIX
+===
+
 Maecenas eu semper ex, in dapibus lacus. 
 Nam at risus eget mauris dictum dignissim et vitae dolor. 
 Mauris dignissim turpis ipsum, at sollicitudin magna rhoncus et. 
@@ -81,3 +82,6 @@ Sed placerat, metus nec aliquet dapibus, mauris lacus porttitor purus, vitae luc
 #
 
 #
+
+![[Monolith_chan.jpg|500]]
+
