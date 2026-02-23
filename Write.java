@@ -20,7 +20,7 @@ public final class Write {
         StringBuilder result = new StringBuilder();
 
         for (String line : lines) {
-            if (line.equals("@overhere!")) {
+            if (line.equals("68747470733A2F2F7777772E796F75747562652E636F6D2F77617463683F763D6451773477395767586351")) {
                 result.append(insertContent).append("\n");
             } else {
                 result.append(line).append("\n");

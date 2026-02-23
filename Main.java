@@ -39,10 +39,11 @@ public class Main {
                     Path targetPath = targetDir.resolve(newName);
 
                     System.out.print("Processing " + sourcePath.toString() + "... ");
-					
+					long startTime = System.nanoTime();
 					Write.writeToHTML(sourcePath, targetPath);
-
-					System.out.print("Done.\n");
+					long endTime = System.nanoTime();
+					double duration = (endTime - startTime) / 1000000d;
+					System.out.print("Done. (Time taken: "+duration+" millisecond(s))\n");
                 }
 
             } catch (IOException e) {
@@ -53,7 +54,7 @@ public class Main {
          
     }
 
-    public static void deleteRecursively(Path path) throws IOException {
+    private static void deleteRecursively(Path path) throws IOException {
         if (Files.isDirectory(path)) {
             try (DirectoryStream<Path> entries = Files.newDirectoryStream(path)) {
                 for (Path entry : entries) {
@@ -65,7 +66,7 @@ public class Main {
     }
 
     
-    public static void deleteContents(Path folder) throws IOException {
+    private static void deleteContents(Path folder) throws IOException {
         if (!Files.isDirectory(folder)) {
             return;
         }

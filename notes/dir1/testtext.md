@@ -19,9 +19,11 @@ More testing
 
 Etiam ___facilisis___, odio nec consequat dapibus,
 ipsum dui fringilla mauris, vitae pretium ante ligula pulvinar nunc.
+
 > Maecenas a *mollis* enim. 
 >>>>> Lorem ipsum dolor $\frac{1+\sqrt{5}}{2}$ sit amet, 
 > consectetur **adipiscing** elit. 
+
 Maecenas aliquam 
 in metus vitae aliquam. 
 
@@ -35,7 +37,9 @@ vitae** velit tincidunt condimentum.
 Fusce sed $e^{\pi i} + 1 = 0$ tortor vel sem viverra condimentum. 
 Phasellus convallis euismod justo vestibulum rutrum.
 Fusce commodo laoreet nunc
+
 $$\int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi}$$
+
 non pellentesque.
 
 #### Hello World V
@@ -78,10 +82,11 @@ Nam at risus eget mauris dictum dignissim et vitae dolor.
 Mauris dignissim turpis ipsum, at sollicitudin magna rhoncus et. 
 In ac urna sit amet erat bibendum cursus ac in orci. 
 
-Sed placerat, metus nec aliquet dapibus, mauris lacus porttitor purus, vitae luctus mi leo vitae lacus. 
-#
+Sed placerat, metus nec \_aliquet dapibus, mauris lacus porttitor purus, vitae luctus mi leo vitae lacus. 
 
-#
+asdasdas [![This\](Monolith\_chan.jpg)](https://www.markdownguide.org/basic-syntax). AAA [**hello** $good$ world!](https://www.markdownguide.org/basic-syntax).. aaaa [**hello** $good$ world!](https://www.markdownguide.org/basic-syntax).
 
-![[Monolith_chan.jpg|500]]
+[**Hello**_World_](https://www.markdownguide.org/basic-syntax)
 
+![This *is* $another$ image](Monolith\_chan.jpg)
+![[Haaaaaaaa|300]]

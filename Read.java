@@ -25,7 +25,6 @@ public final class Read {
             }
             reader.close();
         } catch (IOException e) {
-			System.out.println("(ReadAndConvert) Uh oh!");
             System.out.println(e);
         }
 
