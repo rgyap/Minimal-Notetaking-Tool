@@ -84,9 +84,9 @@ In ac urna sit amet erat bibendum cursus ac in orci.
 
 Sed placerat, metus nec \_aliquet dapibus, mauris lacus porttitor purus, vitae luctus mi leo vitae lacus. 
 
-asdasdas [![This\](Monolith\_chan.jpg)](https://stalker.fandom.com/wiki/Monolith#Effects_of_mind_control). AAA [**hello** $good$ world!](https://www.markdownguide.org/basic-syntax).. aaaa [**hello** $good$ world!](https://www.markdownguide.org/basic-syntax).
+asdasdas [![This\](Monolith\_chan.jpg)](https://stalker.fandom.com/wiki/Monolith#Effects\_of\_mind\_control). AAA [**hello** $good$ world!](https://www.markdownguide.org/basic-syntax).. aaaa [**hello** $good$ world!](https://www.markdownguide.org/basic-syntax).
 
 [**Hello**_World_](https://www.markdownguide.org/basic-syntax)
 
-![This *is* $another$ image](Monolith\_chan.jpg)
+![This *is* $another$ image](C:\\Users\\remus\\Documents\\Java Stuff\\Minimal-Notetaking-Tool\\notes\\Monolith\_chan.jpg)
 ![[Haaaaaaaa|300]]
