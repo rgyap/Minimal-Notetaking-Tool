@@ -328,7 +328,7 @@ public final class Convert {
 				char[] curl = url.toCharArray();
 				String newUrl = "";
 				for (char c : curl) {
-					if (c == '\\') {
+					if (c == '\\' || c == '_') {
 						newUrl = newUrl + '\\';
 					}
 					newUrl = newUrl + c;
