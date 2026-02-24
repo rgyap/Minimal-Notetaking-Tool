@@ -25,9 +25,6 @@ public final class Convert {
 		
         for (int j = 0; j < lines.size(); j++) {
             ArrayList<Character> s = new ArrayList<>(lines.get(j)); 
-            
-            String res = "";
-			String str = ""; // for general use for processing
 
             if (s.size()  == 0) {
 				converts.add("");
@@ -35,18 +32,9 @@ public final class Convert {
             } 
             
 			// headings
-
-			str = processHeader1(s);
-			if (!str.equals("")) {
-				converts.add(str);
-				continue;
-			}
-
-			
-			// headings (alternative style)
-
+			s = processHeader1(s); // hash style
              
-            if (j < lines.size() - 1 && threeOrMoreLineCharacters(lines.get(j+1))) {
+            if (j < lines.size() - 1 && threeOrMoreLineCharacters(lines.get(j+1))) { // lines style
                 int hc = 0;
                 if (lines.get(j+1).get(0) == '-') {
                     hc = 2;
@@ -56,34 +44,20 @@ public final class Convert {
                 }
 
 				if (hc > 0) {
-					converts.add(processHeader2(s, hc));
                     j++;
-                    continue;
+					s = processHeader2(s, hc);
 				}
-					
             }
 
 			// horizontal lines
-			
-			if (s.size() >= 3) {
-				boolean addHorizontalLine = false;
-				
-				if (threeOrMoreLineCharacters(s)) {
-					addHorizontalLine = true;
-				}
-				if (addHorizontalLine) {
-					res = res + "<hr>";
-					converts.add(res);
-
-					continue;
-				}
+			if (threeOrMoreLineCharacters(s)) {
+				converts.add("<hr>");
+				continue;
 			}
 			
 			// links
 			s = processLinks(s);
-			
-			 
-					
+	
 			// formatting
 			s = lineFormatting(s,st);
 			
@@ -92,12 +66,11 @@ public final class Convert {
 
 			// process blockquotes
 			if (s.size() > 2 && s.get(0) == '>') {
-				converts.add(processBlockQuotes(lines, s, j));
-				continue;	
+				s = processBlockQuotes(lines, s, j);
 			}
 
 			// add line breaks
-			if (shouldInsertBreak(j, lines, st)) {
+			if (shouldInsertBreak(s, j, lines, st)) {
 				s.add('<');s.add('b');s.add('r');s.add('>');
 			}
 			
@@ -165,10 +138,10 @@ public final class Convert {
 		
 	}
 
-	private static boolean shouldInsertBreak(int j, ArrayList<ArrayList<Character>> lines, Stack<Integer> st) {
+	private static boolean shouldInsertBreak(ArrayList<Character> s, int j, ArrayList<ArrayList<Character>> lines, Stack<Integer> st) {
 		
 		String res = "";
-		for (char c : lines.get(j)) {
+		for (char c : s) {
 			res = res + c;
 		}
 		
@@ -212,26 +185,15 @@ public final class Convert {
 			}
 		}
 		
-		// No breaks before block quotes
-
-		if (nextLine.size() >= 2) {
-			String check = "";
-			int i = 0;
-			while (i < nextLine.size()) {
-				if (nextLine.get(i) != '>') {
-					break;
-				}
-				i++;
-			}
-			if (nextLine.get(i) == ' ') {
-				return false;
-			}
+		// No breaks after block quotes
+		if (res.endsWith("</blockquote>")) {
+			return false;
 		}
 
 		return true;
 	}
 	
-	private static String processBlockQuotes(ArrayList<ArrayList<Character>> lines, ArrayList<Character> s, int index) {
+	private static ArrayList<Character> processBlockQuotes(ArrayList<ArrayList<Character>> lines, ArrayList<Character> s, int index) {
 		ArrayList<String> arr = new ArrayList<String>();
 		
 		for (char c : s) {
@@ -276,9 +238,14 @@ public final class Convert {
 		}
 		
 		for (int k3=0; k3 < arr.size(); k3++) {
-			out += arr.get(k3);
+			out = out + arr.get(k3);
 		} 
-		return out;
+		
+		ArrayList<Character> out1 = new ArrayList<Character>();
+		for (char c : out.toCharArray()) {
+			out1.add(c);
+		}
+		return out1;
 	}
 
 	private static ArrayList<Character> processLinks(ArrayList<Character> in) {
@@ -328,9 +295,6 @@ public final class Convert {
 				char[] curl = url.toCharArray();
 				String newUrl = "";
 				for (char c : curl) {
-					//if (c == '\\' || c == '_') {
-					//	newUrl = newUrl + '\\';
-					//}
 					newUrl = newUrl + c;
 				}
 				
@@ -344,12 +308,9 @@ public final class Convert {
 				}
 				 
 				String str = "<a href='"+newUrl+"'>"+linkText+"</a>";
-				System.out.println(str);
+				 
 				char[] link = str.toCharArray();
 				for (char c : link) {
-					//if (c == '_') {
-					//	result.add('\\');
-					//}
 					result.add(c);
 				}
 				i = j;
@@ -359,21 +320,6 @@ public final class Convert {
 		}
 		return result;
 	}
-	/*
-	private static ArrayList<Character> processLinks2(ArrayList<Character> in) {
-		ArrayList<Character> arr = new ArrayList<Character>(in);
-		ArrayList<Character> result = new ArrayList<Character>();
-		 
-		if (in.size() < 4) {
-			return in;
-		}
-		for (int i = 0; i < arr.size(); i++) {
-			 
-			//if (arr.get(0) == '[' || (i > 0 && arr.get(i) == '[' && (arr.get(i-1) != '\\' && arr.get(i-1) != '!'))) {
-			if (arr.get(0) == '[' && arr.get(1) == '[') || (i > 0 && arr.get(i) == '[' && arr.get(i-1) != ')
-			}
-		}
-	}*/
 	
 	private static ArrayList<Character> processImages(ArrayList<Character> in) {
 		ArrayList<Character> arr = new ArrayList<Character>(in);
@@ -390,7 +336,6 @@ public final class Convert {
 				String url = "";
 				int j = i + 1;
 				
-				//while (j < arr.size() && (arr.get(j) != ']' || arr.get(j-1) == '\\')) {
 				while (j < arr.size() && (arr.get(j) != ']')) {
 					linkText = linkText + arr.get(j);
 					j++;
@@ -428,9 +373,6 @@ public final class Convert {
 				char[] curl = url.toCharArray();
 				String newUrl = "";
 				for (char c : curl) {
-					//if (c == '\\' ) {
-					//	newUrl = newUrl + '\\';
-					//}
 					newUrl = newUrl + c;
 				}
 				 
@@ -438,9 +380,6 @@ public final class Convert {
 				
 				char[] link = str.toCharArray();
 				for (char c : link) {
-					//if (c == '_') {
-					//	result.add('\\');
-					//}
 					result.add(c);
 				}
 				i = j;
@@ -450,19 +389,6 @@ public final class Convert {
 		}
 		return result;
 	}
-	/*
-	private static ArrayList<Character> processImages2(ArrayList<Character> in) {
-		ArrayList<Character> arr = new ArrayList<Character>(in);
-		ArrayList<Character> result = new ArrayList<Character>();
-		 
-		if (in.size() < 6) {
-			return in;
-		}
-		
-		if (i > 0 && arr.get(i) == '[' && arr.get(i-1) != '\\' && arr.get(i-1) == '!') {
-		
-		
-	}*/
 	 
 	private static boolean threeOrMoreLineCharacters(ArrayList<Character> s) {
 		if (s.size() < 3) {
@@ -482,15 +408,15 @@ public final class Convert {
 		return false;
 	}
 
-    private static String processHeader1(ArrayList<Character> s) {
+	private static ArrayList<Character> processHeader1(ArrayList<Character> s) {
         int hc = 0;
 
         if (s.size() < 3) {
-            return "";
+            return s;
         }
 		
 		if (s.get(0) != '#') {
-            return "";
+            return s;
         }
 
         for(; hc < s.size(); hc++) {
@@ -500,7 +426,7 @@ public final class Convert {
         }
 
         if (s.get(hc) != ' ') {
-            return "";
+            return s;
         }
 
         String content = "";
@@ -508,16 +434,29 @@ public final class Convert {
             content = content + s.get(k);
         }
 
-        String out = "<h"+hc+">"+content+"</h"+hc+">";
-        return out;
-    }
+        String result = "<h"+hc+">"+content+"</h"+hc+">";
+		
+		ArrayList<Character> out = new ArrayList<Character>();
+		for (char c : result.toCharArray()) {
+			out.add(c);
+		}
 
-    private static String processHeader2(ArrayList<Character> s, int hc) {
-        String out = "";
+        return out;
+
+    }
+	
+	private static ArrayList<Character> processHeader2(ArrayList<Character> s, int hc) {
+		char hcchar = (char)(hc + '0');
+		ArrayList<Character> out = new ArrayList<Character>();
+		
+		out.add('<');out.add('h');out.add(hcchar);out.add('>');
+		
         for (char c : s) {
-            out = out + c;
+            out.add(c);
         }
-        out = "<h"+hc+">"+out+"</h"+hc+">";
+		
+		out.add('<');out.add('/');out.add('h');out.add(hcchar);out.add('>');
+		
         return out;
     }
 	
