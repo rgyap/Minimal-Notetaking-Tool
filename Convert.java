@@ -25,15 +25,26 @@ public final class Convert {
 		
         for (int j = 0; j < lines.size(); j++) {
             ArrayList<Character> s = new ArrayList<>(lines.get(j)); 
+			/*
+			long startTime = 0;
+			long endTime = 0;
+			double duration;*/
 
-            if (s.size()  == 0) {
+            if (s.size() == 0) {
 				converts.add("");
                 continue;    
             } 
             
 			// headings
+			//startTime = System.nanoTime();
+			
 			s = processHeader1(s); // hash style
-             
+			/*
+			endTime = System.nanoTime();
+			duration = (endTime - startTime) / 1000000d;
+			System.out.print("Done. (Time taken: "+duration+" millisecond(s))\n");
+			
+			startTime = System.nanoTime(); */
             if (j < lines.size() - 1 && threeOrMoreLineCharacters(lines.get(j+1))) { // lines style
                 int hc = 0;
                 if (lines.get(j+1).get(0) == '-') {
@@ -65,7 +76,7 @@ public final class Convert {
 			s = processImages(s); 
 
 			// process blockquotes
-			if (s.size() > 2 && s.get(0) == '>') {
+			if (s.size() >= 1 && s.get(0) == '>') {
 				s = processBlockQuotes(lines, s, j);
 			}
 
@@ -203,7 +214,7 @@ public final class Convert {
 		String out = "";
 		 
 		int k = 0;
-		while (arr.get(k).equals(">")) {
+		while (k < arr.size() && arr.get(k).equals(">")) {
 			char prev = (char)0;
 			if (k < lines.get(index-1).size()) {
 				prev = lines.get(index-1).get(k);
@@ -212,21 +223,27 @@ public final class Convert {
 			if (prev != '>') {
 				arr.set(k, "<blockquote>");
 			} else {
-				arr.set(k, "");
+				arr.set(k, "lol");
 			}
  
 			k++;
 		}
 		
-		arr.remove(k);
+		System.out.println("Curr line count: " + k);
+		// Removes the extra space.
+		//if (k < arr.size()) {
+		//	arr.remove(k);
+		//}
 			
 		int countNext = 0;
 		
 		if (index < lines.size()-1 && lines.get(index+1).size() > 0) {
-			while (lines.get(index+1).get(countNext) == '>') {
+			while (countNext < lines.get(index+1).size() && lines.get(index+1).get(countNext) == '>') {
 				countNext++;
 			}
 		}
+		
+		System.out.println("Next line count: " + countNext);
 		
 		if (k > countNext) {
 			if (k > 1) {
@@ -493,17 +510,19 @@ public final class Convert {
         s.add((char)0);
         s.add((char)0);
         s.add((char)0);
+		
+		
         
         for (int i = 0; i < s.size()-3; i++) {
             // Escape
-            if (s.get(i) == '\\' && !st.contains(5) && !st.contains(6)) {
+            if (s.get(i) == '\\' && !st.contains(5) && !st.contains(6) && !st.contains(7) && !st.contains(8)) {
                 res = res + s.get(i+1);
                 i++;
                 continue;
             } 
 
             // Bold and Italics
-            if ((s.get(i) == '*' || s.get(i) == '_') && !st.contains(5) && !st.contains(6)) {
+            if ((s.get(i) == '*' || s.get(i) == '_') && !st.contains(5) && !st.contains(6) && !st.contains(7) && !st.contains(8)) {
 				char emph = s.get(i);
                 int ac = 0;
 
@@ -529,7 +548,7 @@ public final class Convert {
             }
 
 			// Code Blocks
-			if (s.get(i) == '`' && !st.contains(5) && !st.contains(6)) {
+			if (s.get(i) == '`' && !st.contains(5) && !st.contains(6) && !st.contains(7)) {
 				int cc = 0;
 				int m = 0;
 				if ((s.get(i+1) == '`') && (s.get(i+2) == '`')) {
