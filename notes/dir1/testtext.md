@@ -19,11 +19,16 @@ More testing
 
 Etiam ___facilisis___, odio nec consequat dapibus,
 ipsum dui fringilla mauris, vitae pretium ante ligula pulvinar nunc.
-> Maecenas a *mollis* enim. 
->>>>> Lorem ipsum dolor $\frac{1+\sqrt{5}}{2}$ sit amet, 
->>> consectetur **adipiscing** elit. 
-> ...
-> Yes
+
+> *test1*
+>>>>> **test2**
+>>>>> ***test3***
+>>>>> _test1_
+>>> __test2__
+>>>> ___test3___
+> test $6$
+> test 7.
+
 Maecenas aliquam 
 in metus vitae aliquam. 
 
@@ -82,11 +87,4 @@ Nam at risus eget mauris dictum dignissim et vitae dolor.
 Mauris dignissim turpis ipsum, at sollicitudin magna rhoncus et. 
 In ac urna sit amet erat bibendum cursus ac in orci. 
 
-Sed placerat, metus nec \_aliquet dapibus, mauris lacus porttitor purus, vitae luctus mi leo vitae lacus. 
-
-asdasdas [![This\](Monolith\_chan.jpg)](https://stalker.fandom.com/wiki/Monolith#Effects\_of\_mind\_control). AAA [**hello** $good$ world!](https://www.markdownguide.org/basic-syntax).. aaaa [**hello** $good$ world!](https://www.markdownguide.org/basic-syntax).
-
-[**Hello**_World_](https://www.markdownguide.org/basic-syntax)
-
-![This *is* $another$ image](C:\\Users\\remus\\Documents\\Java Stuff\\Minimal-Notetaking-Tool\\notes\\Monolith\_chan.jpg)
-![[Haaaaaaaa|300]]
+Sed placerat, metus nec aliquet dapibus, mauris lacus porttitor purus, vitae luctus mi leo vitae lacus. 

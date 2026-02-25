@@ -31,4 +31,8 @@ public class Find {
 
         return "";
     }
+	
+	public static String find(String dirName, String fileName) {
+		return findFile(Paths.get(dirName), fileName);
+	}
 }
