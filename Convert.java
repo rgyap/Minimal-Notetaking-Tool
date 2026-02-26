@@ -17,6 +17,7 @@ public final class Convert {
         ArrayList<String> converts = new ArrayList<String>();
         Stack<Integer> st = new Stack<>(); // FOR FORMATTING
         Stack<Integer> sbq = new Stack<>(); // FOR BLOCK QUOTE PROCESSING
+        boolean formatable = st.contains(5) || st.contains(6) || st.contains(7) || st.contains(8);
         
         // Conversion magic
         
@@ -28,57 +29,75 @@ public final class Convert {
                 continue;    
             } 
             
-            // headings
-			if (!st.contains(5) && !st.contains(6) && !st.contains(7) && !st.contains(8)) { // no headers inside math or code!
-				s = processHeader1(s); // hash style
-							
-				if (j < lines.size() - 1 && threeOrMoreLineCharacters(lines.get(j+1))) { // lines style
-					
-					int hc = 0;
-					if (lines.get(j+1).get(0) == '-') {
-						hc = 2;
-					}
-					if (lines.get(j+1).get(0) == '=') {
-						hc = 1;
-					}
-
-					if (hc > 0) {
-						s = processHeader2(s, hc);
-						j++;
-					}
-				}
-			
-			
-				// horizontal lines
-				if (threeOrMoreLineCharacters(s)) {
-					converts.add("<hr>");
-					continue;
-				}
-			}
             
-            // links
-            s = processLinks(s);
-			s = processLinks2(s);
-    
-            // process blockquotes
-            if (s.size() >= 1 && s.get(0) == '>') {
-                s = processBlockQuotes(lines, s, j, sbq);
-            }
+			boolean notFormattable = st.contains(5) || st.contains(6) || st.contains(7) || st.contains(8);  // no headers inside math or code!
+
+            if (!notFormattable) { // BEGIN FORMATTABLE BLOCK
+
+                // headings
+
+                s = processHeader1(s); // hash style
+                                
+                if (j < lines.size() - 1 && threeOrMoreLineCharacters(lines.get(j+1))) { // lines style
+                    
+                    int hc = 0;
+                    if (lines.get(j+1).get(0) == '-') {
+                        hc = 2;
+                    }
+                    if (lines.get(j+1).get(0) == '=') {
+                        hc = 1;
+                    }
+
+                    if (hc > 0) {
+                        s = processHeader2(s, hc);
+                        j++;
+                    }
+                }
+                
+                
+                    // horizontal lines
+                if (threeOrMoreLineCharacters(s)) {
+                    converts.add("<hr>");
+                    continue;
+                }
+                
+                // links
+                s = processLinks(s);
+                s = processLinks2(s);
+                
+        
+                // process blockquotes
+                if (s.size() >= 1 && s.get(0) == '>') {
+                    s = processBlockQuotes(lines, s, j, sbq);
+                }
+
+            } // END OF FORMATTABLE BLOCK
     
             // formatting
             s = lineFormatting(s,st);
+
+
+            if (!notFormattable) { // BEGIN FORMATTABLE BLOCK
             
-            // images
-            s = processImages(s); 
-			s = processImages2(s); 
+                // images
+                s = processImages(s); 
+                s = processImages2(s); 
+
+                
+
+                // add line breaks
+                
+                if (shouldInsertBreak(s, j, lines, st)) {
+                    s.add('<');s.add('b');s.add('r');s.add('>');
+                }
+
+                s = processParas(lines, s, j);
+
+
+            } // END FORMATTABLE BLOCK
+
 
             
-
-            // add line breaks
-            
-            if (shouldInsertBreak(s, j, lines, st)) {
-                s.add('<');s.add('b');s.add('r');s.add('>');
-            }
             
             String rrr = "";
             for (char c : s) {
@@ -88,79 +107,78 @@ public final class Convert {
             converts.add(rrr);
         }
 
-        //converts = processParagraphs(converts);
-
         return converts;
     }
-    
-    
-    private static ArrayList<String> processParagraphs(ArrayList<String> c) {
-        ArrayList<String> converts = new ArrayList<String>(c);
-        for (int l=0; l < converts.size(); l++) {
-            if (converts.get(l).length() == 0) {
-                continue;
-            }
-            
-            char[] arr = converts.get(l).toCharArray();
-            String[] tags = {
-                "$$", "<h1>", "<h2>", "<h3>", "<h4>", "<h5>", "<h6>",
-                "<hr>", "<blockquote>", "<!--", "<div>", ">", "<pre>"
-            }; 
-            String[] tagsClose = {
-                "$$", "</h1>", "</h2>", "</h3>", "</h4>", "</h5>", "</h6>",
-                "</hr>", "</blockquote>", "-->", "</div>", "</pre>"
-            }; 
-            HashSet<String> blacklistedTags = new HashSet<String>(Arrays.asList(tags));
-            HashSet<String> blacklistedTagsClose = new HashSet<String>(Arrays.asList(tagsClose));
-            
-            String lineTag = "";
-            boolean shouldContinue = false;
-            for (int ll = 0; ll < arr.length; ll++) {
-                lineTag = lineTag + arr[ll];
-                if (blacklistedTags.contains(lineTag)) {
-                    shouldContinue = true;
-                }
-            }
 
-            if (shouldContinue) {
-                continue;
-            }
-            
-            if (l == 0 && l+1 < converts.size() && converts.get(l+1).length() == 0) {
-                String modded = "<p>" + converts.get(l);
-                converts.set(l, modded);
-            }
-            if (l > 0 && converts.get(l-1).length() == 0) {
-                String modded = "<p>" + converts.get(l);
-                converts.set(l, modded);
-            }
-            
-            String lineTagClose = "";
-            
-            for (int ll = arr.length - 1; ll >= 0; ll--) {
-                lineTagClose = arr[ll] + lineTagClose;
-                if (blacklistedTagsClose.contains(lineTagClose)) {
-                    shouldContinue = true;
-                }
-            }
-			
-            if (shouldContinue) {
-                continue;
-            }
-             
-            if (l == converts.size() - 1) {
-                String modded = converts.get(l) + "</p>";
-                converts.set(l, modded);
-            } else if (converts.get(l+1).length() == 0) {
-                String modded = converts.get(l) + "</p>";
-                converts.set(l, modded);
-            }
-            
-        }
-        return converts;
+    private static ArrayList<Character> processParas(ArrayList<ArrayList<Character>> lines, ArrayList<Character> s, int index) {
+        ArrayList<Character> result = new ArrayList<Character>();
         
-    }
+         if (s.size() == 0) {
+            return s;
+        }
 
+
+        String[] tags = {
+            "$$", "<h1>", "<h2>", "<h3>", "<h4>", "<h5>", "<h6>",
+            "<hr>", "<blockquote>", "<!--", "<div>", ">", "<pre>"
+        }; 
+        String[] tagsClose = {
+            "$$", "</h1>", "</h2>", "</h3>", "</h4>", "</h5>", "</h6>",
+            "</hr>", "</blockquote>", "-->", "</div>", "</pre>"
+        }; 
+        HashSet<String> blacklistedTags = new HashSet<String>(Arrays.asList(tags));
+        HashSet<String> blacklistedTagsClose = new HashSet<String>(Arrays.asList(tagsClose));
+        
+        boolean addPtag = true;
+        String strTest = "";
+        for (int i = 0; i < s.size(); i++) {
+            if (blacklistedTags.contains(strTest)) {
+                addPtag = false;
+                break;
+            }
+            strTest = strTest + s.get(i);
+        }
+
+        if (addPtag) {
+            ArrayList<Character> prev = new ArrayList<Character>();
+            if (index - 1 >= 0) {
+                prev = lines.get(index - 1);
+            }    
+            if (prev.size() == 0) {
+                // <p>
+                result.add('<');result.add('p');result.add('>');
+            }
+
+        }
+
+        for (char chr : s) {
+            result.add(chr);
+        }
+
+        boolean addPtagClose = true;
+        String strTest2 = "";
+        for (int ii = s.size() - 1; ii >= 0; ii--) {
+            if (blacklistedTagsClose.contains(strTest2)) {
+                addPtagClose = false;
+                break;
+            }
+            strTest2 = s.get(ii) + strTest2;
+        }
+
+        if (addPtagClose) {
+            ArrayList<Character> next = new ArrayList<Character>();
+            if (index + 1 < lines.size()) {
+               next = lines.get(index + 1);
+            }
+
+            if (next.size() == 0) {
+                // </p>
+                result.add('<');result.add('/');result.add('p');result.add('>');
+            }
+        }
+        return result;
+    }
+    
     private static ArrayList<Character> processBlockQuotes(ArrayList<ArrayList<Character>> lines, ArrayList<Character> s, int index, Stack<Integer> stack) {
         ArrayList<String> arr = new ArrayList<String>();
 
@@ -186,7 +204,7 @@ public final class Convert {
         int currCount = lenofgr(s);
 
         if (prevCount < currCount && !stack.contains(currCount)) {
-            int diff = currCount - prevCount; // 1 - 0 = 1
+            int diff = currCount - prevCount; 
             for (int i = 0; i < diff; i++) {
                 stack.push(1);
                 arr.add("<blockquote>");
@@ -458,7 +476,7 @@ public final class Convert {
 
     private static ArrayList<Character> processHeader1(ArrayList<Character> s) {
         int hc = 0;
-
+     
         if (s.size() < 3) {
             return s;
         }

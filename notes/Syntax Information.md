@@ -36,3 +36,14 @@ This is a paragraph.
 This is another.
 ```
 
+## Line Breaks
+
+In order to create a line break, just continue typing in the immediately next line.
+
+```
+This is a line.
+Followed by another,
+That is not separated
+By a paragraph break.
+```
+
