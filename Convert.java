@@ -1,8 +1,3 @@
-//import java.nio.file.Files;
-//import java.nio.file.Paths;
-//import java.nio.file.Path;
-
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Stack;
@@ -11,12 +6,28 @@ import java.util.HashSet;
 public final class Convert {
 
     private Convert() {
+		
     }
+	
+	private static String[] tags = {
+        "$$", "<h1>", "<h2>", "<h3>", "<h4>", "<h5>", "<h6>",
+        "<hr>", "<blockquote>", "<!--", "<div>", ">", "<pre>", "<ul>", "<ol>"
+    }; 
+    private static String[] tagsClose = {
+        "$$", "</h1>", "</h2>", "</h3>", "</h4>", "</h5>", "</h6>",
+        "</hr>", "</blockquote>", "-->", "</div>", "</pre>", "</ul>", "</ol>"
+    }; 
+    private static HashSet<String> blacklistedTags = new HashSet<String>(Arrays.asList(tags));
+    private static HashSet<String> blacklistedTagsClose = new HashSet<String>(Arrays.asList(tagsClose));
+	
+	private static Stack<Integer> st = new Stack<>(); // FOR FORMATTING
+    private static Stack<Integer> sbq = new Stack<>(); // FOR BLOCK QUOTE PROCESSING
+	private static Stack<Integer> suo = new Stack<>(); // FOR UNORDERED LISTS
+	private static Stack<Integer> sor = new Stack<>(); // FOR ORDERED LISTS
 
     public static ArrayList<String> conv(ArrayList<ArrayList<Character>> lines) {
         ArrayList<String> converts = new ArrayList<String>();
-        Stack<Integer> st = new Stack<>(); // FOR FORMATTING
-        Stack<Integer> sbq = new Stack<>(); // FOR BLOCK QUOTE PROCESSING
+        
         boolean formatable = st.contains(5) || st.contains(6) || st.contains(7) || st.contains(8);
         
         // Conversion magic
@@ -34,10 +45,11 @@ public final class Convert {
 
             if (!notFormattable) { // BEGIN FORMATTABLE BLOCK
 
+                 
                 // headings
 
                 s = processHeader1(s); // hash style
-                                
+ 
                 if (j < lines.size() - 1 && threeOrMoreLineCharacters(lines.get(j+1))) { // lines style
                     
                     int hc = 0;
@@ -54,9 +66,8 @@ public final class Convert {
                     }
                 }
                 
-                
-                    // horizontal lines
-                if (threeOrMoreLineCharacters(s)) {
+                // horizontal lines
+                if (threeOrMoreLineCharacters(s) && (s.get(0) == '-' || s.get(0) == '_')) {
                     converts.add("<hr>");
                     continue;
                 }
@@ -64,41 +75,35 @@ public final class Convert {
                 // links
                 s = processLinks(s);
                 s = processLinks2(s);
-                
+				
+				 s = processImages(s); 
+                s = processImages2(s); 
         
                 // process blockquotes
                 if (s.size() >= 1 && s.get(0) == '>') {
                     s = processBlockQuotes(lines, s, j, sbq);
-                }
+                }		
+				
+				if (s.get(0) == '-' || !suo.empty()) {
+					s = processLists(lines, s, j, suo, false);
+				}
+				if ((1 < s.size() && Character.isDigit(s.get(0)) && s.get(1) == '.') || !sor.empty()) {
+					s = processLists(lines, s, j, sor, true);
+				}
 
             } // END OF FORMATTABLE BLOCK
     
             // formatting
-            s = lineFormatting(s,st);
+            s = lineFormatting(s);
 
 
-            if (!notFormattable) { // BEGIN FORMATTABLE BLOCK
-            
-                // images
+            if (!notFormattable) { 
+                // To allow images inside links to process.
                 s = processImages(s); 
-                s = processImages2(s); 
+                s = processImages22(s); 
+				// Result: ![sobbing\](https://images.emojiterra.com/twitter/512px/1f62d.png) will still render as an image.
+            } 
 
-                
-
-                // add line breaks
-                
-                if (shouldInsertBreak(s, j, lines, st)) {
-                    s.add('<');s.add('b');s.add('r');s.add('>');
-                }
-
-                s = processParas(lines, s, j);
-
-
-            } // END FORMATTABLE BLOCK
-
-
-            
-            
             String rrr = "";
             for (char c : s) {
                 rrr = rrr + c;
@@ -106,79 +111,254 @@ public final class Convert {
 
             converts.add(rrr);
         }
+		
+		// FIX CODEBLOCKS TYPED IN A CERTAIN WAY
+		
+		for (int j = 0; j < converts.size(); j++) {
+			if (converts.get(j).length() == 11 && converts.get(j).startsWith("<pre><code>") && j+1 < converts.size()) {
+				String next = converts.get(j+1);
+				next = "<pre><code>" + next;
+				converts.set(j+1, next);
+				converts.set(j, "");
+			}
+		}
+		
+		
+		converts = processParagraphs(converts);
 
         return converts;
     }
+	
+	private static ArrayList<String> processParagraphs(ArrayList<String> strl) {
+		ArrayList<String> res = new ArrayList<String>(strl);
+		
+		if (strl.size() == 0) {
+			return strl;
+		}
+		
+		boolean active = true;
+		
+		String lastStart = "";
+		
+		for (int j = 0; j < res.size(); j++) {
+			String curr = res.get(j);
+			if (curr.length() == 0) {
+				continue;
+			}
+			
+			String startCurr = startsWithWhatTag(curr);
+			String endCurr = endsWithWhatClosingTag(curr);
+			
+			if (startCurr.length() != 0) {
+				active = false;
+				lastStart = startCurr;
+				if (endCurr.length() != 0) {
+					active = true;
+					continue;
+				}
+			}
+			
+			if (endCurr.length() != 0) {
+				active = true;
+				continue;
+			}
+			
+			//if (!active) {
+			//	continue;
+			//}
+			
+			String prev = (j-1 >= 0) ? res.get(j-1) : "";
+			if (active && (prev.length() == 0 || endsWithWhatClosingTag(prev).length() != 0)) {
+				curr = "<p>" + curr;
+			}
+				
+			String next = (j+1 < res.size()) ? res.get(j+1) : "";
+			
+			if (next.length() != 0 && startsWithWhatTag(next).length() == 0) {
+				if (active || lastStart.equals("<blockquote>")) {
+					curr = curr + "<br>";
+				}
+			} else if (active) {
+				curr = curr + "</p>";
+			}
+			
+			if (active || lastStart.equals("<blockquote>")) {
+				res.set(j, curr);
+			}
+			
+		}
+		return res;
+	}
 
-    private static ArrayList<Character> processParas(ArrayList<ArrayList<Character>> lines, ArrayList<Character> s, int index) {
-        ArrayList<Character> result = new ArrayList<Character>();
-        
-         if (s.size() == 0) {
-            return s;
+	private static String startsWithWhatTag(String s) {
+		char[] arr = s.toCharArray();
+		String test = "";
+		for (int i = 0 ; i < arr.length ; i++) {
+			test = test + arr[i];
+			if (blacklistedTags.contains(test)) {
+				return test;
+			}
+		}
+		return "";
+	}
+	
+	private static String endsWithWhatClosingTag(String str) {
+		char[] arr = str.toCharArray();
+		String test = "";
+		for (int i = arr.length - 1; i >= 0; i--) {
+			test = arr[i] + test;
+			if (blacklistedTagsClose.contains(test)) {
+				return test;
+			}
+		}
+		return "";
+	}
+
+	private static ArrayList<Character> processLists(ArrayList<ArrayList<Character>> lines, ArrayList<Character> s, int index, Stack<Integer> stack, boolean ordered) {
+		
+		final int IND = 2; // Indentation
+		
+		String xl = "<ul>";
+		String xlc = "</ul>";
+		
+		if (ordered) {
+			xl = "<ol>";
+			xlc = "</ol>";
+		}
+		
+		ArrayList<String> arr = new ArrayList<String>();
+		
+		ArrayList<Character> prevprev = new ArrayList<Character>();
+        if (index-2 >= 0) {
+            prevprev = lines.get(index-2);
         }
-
-
-        String[] tags = {
-            "$$", "<h1>", "<h2>", "<h3>", "<h4>", "<h5>", "<h6>",
-            "<hr>", "<blockquote>", "<!--", "<div>", ">", "<pre>"
-        }; 
-        String[] tagsClose = {
-            "$$", "</h1>", "</h2>", "</h3>", "</h4>", "</h5>", "</h6>",
-            "</hr>", "</blockquote>", "-->", "</div>", "</pre>"
-        }; 
-        HashSet<String> blacklistedTags = new HashSet<String>(Arrays.asList(tags));
-        HashSet<String> blacklistedTagsClose = new HashSet<String>(Arrays.asList(tagsClose));
-        
-        boolean addPtag = true;
-        String strTest = "";
-        for (int i = 0; i < s.size(); i++) {
-            if (blacklistedTags.contains(strTest)) {
-                addPtag = false;
-                break;
-            }
-            strTest = strTest + s.get(i);
+		ArrayList<Character> prev = new ArrayList<Character>();
+        if (index-1 >= 0) {
+            prev = lines.get(index-1);
         }
-
-        if (addPtag) {
-            ArrayList<Character> prev = new ArrayList<Character>();
-            if (index - 1 >= 0) {
-                prev = lines.get(index - 1);
-            }    
-            if (prev.size() == 0) {
-                // <p>
-                result.add('<');result.add('p');result.add('>');
-            }
-
+        ArrayList<Character> next = new ArrayList<Character>();
+        if (index+1 < lines.size()) {
+            next = lines.get(index+1);
         }
-
-        for (char chr : s) {
-            result.add(chr);
-        }
-
-        boolean addPtagClose = true;
-        String strTest2 = "";
-        for (int ii = s.size() - 1; ii >= 0; ii--) {
-            if (blacklistedTagsClose.contains(strTest2)) {
-                addPtagClose = false;
-                break;
-            }
-            strTest2 = s.get(ii) + strTest2;
-        }
-
-        if (addPtagClose) {
-            ArrayList<Character> next = new ArrayList<Character>();
-            if (index + 1 < lines.size()) {
-               next = lines.get(index + 1);
-            }
-
-            if (next.size() == 0) {
-                // </p>
-                result.add('<');result.add('/');result.add('p');result.add('>');
-            }
-        }
-        return result;
-    }
+		ArrayList<Character> nextnext = new ArrayList<Character>();
+		if (index+2 < lines.size()) {
+			nextnext = lines.get(index+2);
+		}
+		
+        int prevCount = countSpacesAtStart(prev) / IND;
+        int nextCount = countSpacesAtStart(next) / IND;
+        int currCount = countSpacesAtStart(s) / IND;
+		int nextnextCount = countSpacesAtStart(nextnext) / IND;
+		
+		if (!listable(s)) {
+			if (!stack.empty()) {
+				return new ArrayList<Character>();
+			}
+			return s;
+		}
+		
+		if (IND*currCount >= s.size()) {
+			return s;
+		}
+		
+		
+		if (!listable(prevprev) && !listable(prev) && listable(s)) {
+			arr.add(xl);
+			stack.push(currCount);
+		}
+		
+		if (prevCount < currCount && listable(prev) && listable(s)) {
+			arr.add(xl);
+			stack.push(currCount);
+		}
+		
+		if (!stack.empty() && listable(s)) {
+			arr.add("<li>");
+		}
+		
+		for (int i = IND*currCount+1; i < s.size(); i++) {
+			if (ordered && i == IND*currCount+1) {
+				continue;
+			}
+			arr.add(String.valueOf(s.get(i)));
+		}
+		
+		if (!listable(next) && listable(nextnext) && nextCount == currCount+1) {
+			arr.add("<p>");
+			for (int i = IND*nextCount; i < next.size(); i++) {
+				arr.add(String.valueOf(next.get(i)));
+			}
+			arr.add("</p>");
+		}
+		
+		if (listable(s) && (!listable(next) || nextCount <= currCount)) {
+			arr.add("</li>");
+		}
+		
+		if (listable(next) && nextCount < currCount) {
+			for (int i = 0 ; i < currCount - nextCount; i++) {
+				arr.add(xlc);
+				stack.pop();
+				if (!stack.empty()) {
+					arr.add("</li>");
+				}
+			}
+		} 
+		
+		if (!listable(next) && nextnextCount < currCount) {
+			for (int i = 0 ; i < currCount - nextnextCount; i++) {
+				arr.add(xlc);
+				stack.pop();
+				if (!stack.empty()) {
+					arr.add("</li>");
+				}
+			}
+		}
+		
+		if (!listable(next) && !listable(nextnext) && !stack.empty()) {
+			arr.add(xlc);
+			stack.pop();
+		}
+		
+		ArrayList<Character> out = new ArrayList<Character>();
+		String o1 = "";
+		for (String str : arr) {
+			o1 = o1 + str;
+		}
+		for (char chr : o1.toCharArray()) {
+			out.add(chr);
+		}
+		return out;
+	}
     
+	private static int countSpacesAtStart(ArrayList<Character> line) {
+		if (line.size() == 0) {
+			return 0;
+		}
+		int result = 0;
+		while (result < line.size() && line.get(result) == ' ') {
+			result++;
+		}
+		if (result >= line.size()) {
+			return 0;
+		}
+		
+		return result;
+	}
+	
+	private static boolean listable(ArrayList<Character> line) {
+		int spaces = countSpacesAtStart(line);
+		if (spaces < line.size() && line.get(spaces) == '-') {
+			return true;
+		}
+		if (spaces + 1 < line.size() && Character.isDigit(line.get(spaces)) && line.get(spaces+1) == '.') {
+			return true;
+		}
+		
+	
+		return false;
+	}
+	
     private static ArrayList<Character> processBlockQuotes(ArrayList<ArrayList<Character>> lines, ArrayList<Character> s, int index, Stack<Integer> stack) {
         ArrayList<String> arr = new ArrayList<String>();
 
@@ -229,6 +409,11 @@ public final class Convert {
         for (char c : o1.toCharArray()) {
             out.add(c);
         }
+		
+		if (out.size() == 0) {
+			out.add((char)0);
+		}
+		
         return out;
     }
 
@@ -256,61 +441,12 @@ public final class Convert {
             i++;
         }
         for (int j=i; j<s.size(); j++) {
+			if (j == i && s.get(j) == ' ') {
+				continue;
+			}
             result = result + s.get(j);
         }
         return result;
-    }
-    
-    private static boolean shouldInsertBreak(ArrayList<Character> s, int j, ArrayList<ArrayList<Character>> lines, Stack<Integer> st) {
-        
-        String res = "";
-        for (char c : s) {
-            res = res + c;
-        }
-        
-        if (j >= lines.size() - 1) {
-            return false;
-        }
-
-        ArrayList<Character> nextLine = lines.get(j + 1);
-
-        if (nextLine.size() == 0) {
-            return false;
-        }
-        
-        // No breaks before, after, and within MathJax math and code blocks
-
-        if (st.contains(5) || st.contains(6) || st.contains(8)) {
-            return false;
-        }
-
-        if (res.endsWith("$$")) {
-            return false;
-        }
-
-        if (nextLine.size() >= 2 && nextLine.get(0) == '$' && nextLine.get(1) == '$') {
-            return false;
-        }
-        
-        if (res.endsWith("</code></pre>")) {
-            return false;
-        }
-        
-        // No breaks before and after block quotes
-        if (res.endsWith("</blockquote>")) {
-            return false;
-        }
-        
-        if (lenofgr(lines.get(j)) < lenofgr(nextLine)) {
-            return false;
-        }
-		
-		// no breaks after headers
-		if (res.endsWith("</h1>") || res.endsWith("</h2>") || res.endsWith("</h3>") || res.endsWith("</h4>") || res.endsWith("</h5>") || res.endsWith("</h6>")) {
-            return false;
-        }
-
-        return true;
     }
     
     private static ArrayList<Character> processLinks(ArrayList<Character> in) {
@@ -340,7 +476,7 @@ public final class Convert {
                 
                 j++;
                 
-                if (arr.get(j) != '(') {
+                if (j >= arr.size() || arr.get(j) != '(') { // We still need to check j >= arr.size() because there still might be confusion with Wiki-style links
                     result.add(arr.get(i));
                     continue;
                 }
@@ -402,7 +538,7 @@ public final class Convert {
 				String title = "";
                 int j = i + 1;
                 
-                while (j < arr.size() && (arr.get(j) != ']')) {
+                while (j < arr.size() && (arr.get(j) != ']' || arr.get(j-1) == '\\')) {
                     linkText = linkText + arr.get(j);
                     j++;
                 }
@@ -473,7 +609,7 @@ public final class Convert {
         }
         return false;
     }
-
+	
     private static ArrayList<Character> processHeader1(ArrayList<Character> s) {
         int hc = 0;
      
@@ -526,11 +662,11 @@ public final class Convert {
         return out;
     }
     
-    private static ArrayList<Character> lineFormatting(ArrayList<Character> s1, Stack<Integer> st) {
+    private static ArrayList<Character> lineFormatting(ArrayList<Character> s1) {
         ArrayList<Character> s = new ArrayList<>(s1);
         
         /*
-        LEGEND:
+        LEGEND for the stack st:
         0 -> Uh, nothing!
         1 -> *
         2 -> **
@@ -540,8 +676,10 @@ public final class Convert {
         6 -> $$
         7 -> `
         8 -> ```
+		9 -> __
+		10 -> ___
         */
-         
+		         
         String[][] formatters = {
             {"", ""},                           // 0
             {"<i>", "</i>"},                    // 1
@@ -551,7 +689,9 @@ public final class Convert {
             {"\\(", "\\)"},                     // 5
             {"$$", "$$"},                       // 6
             {"<code>", "</code>"},              // 7
-            {"<pre><code>", "</code></pre>"}    // 8
+            {"<pre><code>", "</code></pre>"},   // 8
+			{"<strong>", "</strong>"},          // 9
+			{"<em><strong>", "</strong></em>"}  // 10
         };
         String res = "";
         
@@ -559,8 +699,6 @@ public final class Convert {
         s.add((char)0);
         s.add((char)0);
         s.add((char)0);
-        
-        
         
         for (int i = 0; i < s.size()-3; i++) {
             // Escape
@@ -581,9 +719,17 @@ public final class Convert {
                 
                 i += ac - 1;
                 
-                if (ac==1 && emph == '_') {
-                    ac = 4;
-                }
+				if (emph == '_') {
+					if (ac == 1) {
+						ac = 4;
+					}
+					if (ac == 2) {
+						ac = 9;
+					}
+					if (ac == 3) {
+						ac = 10;
+					}
+				}
                 
                 if (st.contains(ac)) {
                     st.pop();
@@ -606,14 +752,17 @@ public final class Convert {
                 }
                 i += m; 
                 int k = 7+cc;
-                if (st.contains(k)) {
-                    st.pop();
-                    res = res + formatters[k][1];
-                } else {
-                    st.push(k);
-                    res = res + formatters[k][0];
-                }
-                continue;
+				 
+				if ((k == 7 && !st.contains(8)) || k == 8) {
+					if (st.contains(k)) {
+						st.pop();
+						res = res + formatters[k][1];
+					} else {
+						st.push(k);
+						res = res + formatters[k][0];
+					}
+					continue;
+				}
             }
 
             // MathJax 
@@ -634,8 +783,13 @@ public final class Convert {
                 }
                 continue;
             } 
-
-            res = res + s.get(i);
+			
+			if ((st.contains(7) || st.contains(8)) && s.get(i) == '<') {
+				res = res + "&lt;";
+				continue;
+			}
+			
+			res = res + s.get(i);
         } 
         ArrayList<Character> out = new ArrayList<Character>();
         for (char c : res.toCharArray()) {
@@ -646,6 +800,79 @@ public final class Convert {
     }
 
     private static ArrayList<Character> processImages2(ArrayList<Character> in) {
+		ArrayList<Character> arr = new ArrayList<Character>(in);
+        ArrayList<Character> result = new ArrayList<Character>();
+		
+		if (in.size() < 6) {
+			return in;
+		}
+		
+		for (int i = 0; i < arr.size(); i++) {
+            if (i > 0 && i+1 < arr.size() && arr.get(i) == '[' && arr.get(i+1) == '[' && arr.get(i-1) == '!' && arr.get(Math.max(i-2,0)) != '\\') {
+                String imageName = "";
+                String imageSize = "";
+                int j = i + 2;
+                
+                while (j < arr.size() && (arr.get(j) != '|')) {
+                    imageName = imageName + arr.get(j);
+                    j++;
+                }
+
+                if (j >= arr.size()) {
+                    result.add(arr.get(i));
+                    continue;
+                }
+                
+                j++;
+
+                while (j < arr.size() && arr.get(j) != ']') {
+                    imageSize = imageSize + arr.get(j);
+                    j++;
+                }
+				
+				j++;
+                
+                
+                if (j >= arr.size()) {
+                    result.add(arr.get(i));
+                    continue;
+                }
+				
+				if (arr.get(j) != ']') {
+                    result.add(arr.get(i));
+                    continue;
+                }
+                
+                result.remove(i-1);
+ 
+				String url = Find.find("./notes", imageName);
+				
+				char[] curl = url.toCharArray();
+                String newUrl = "";
+                for (char c : curl) {
+                    if (c == '\\' || c == '_') {
+                        newUrl = newUrl + '\\';
+                    }
+                    newUrl = newUrl + c;
+                }
+                
+                String str = "<img src='"+newUrl+"' width='"+imageSize+"'>";
+                
+                char[] imgt = str.toCharArray();
+                for (char c : imgt) {
+                    result.add(c);
+                }
+                i = j;
+                continue;
+            }
+            result.add(arr.get(i));
+        }
+        return result;
+
+	}	
+	
+	
+	private static ArrayList<Character> processImages22(ArrayList<Character> in) {
 		ArrayList<Character> arr = new ArrayList<Character>(in);
         ArrayList<Character> result = new ArrayList<Character>();
 		
@@ -707,6 +934,11 @@ public final class Convert {
         return result;
 
 	}	
+	
+	
+	
+	
+	
 
 	private static ArrayList<Character> processLinks2(ArrayList<Character> in) {
 		ArrayList<Character> arr = new ArrayList<Character>(in);
@@ -717,7 +949,7 @@ public final class Convert {
 		}
 		
 		for (int i = 0; i < arr.size(); i++) {
-            if (i+1 < arr.size() && arr.get(i) == '[' && arr.get(i+1) == '[' && arr.get(Math.max(i-1,0)) != '\\') {
+            if (i+1 < arr.size() && arr.get(i) == '[' && arr.get(i+1) == '[' && arr.get(Math.max(i-1,0)) != '\\' && arr.get(Math.max(i-1,0)) != '!' ) {
                 String fileName = "";
                 String displayText = "";
                 int j = i + 2;
@@ -746,19 +978,8 @@ public final class Convert {
                     result.add(arr.get(i));
                     continue;
                 }
-                
-                result.remove(i-1);
-				/*
-				String query = "";
-				char[] cquery = fileName.toCharArray();
-				for (char c : cquery) {
-					if (c == '\\') {
-						continue;
-					}
-					query = query + c;
-				}*/
 				
-				String url = Find.find("./notes", fileName);
+				String url = Find.find("./mainnotes", fileName);
 				
 				char[] curl = url.toCharArray();
                 String newUrl = "";

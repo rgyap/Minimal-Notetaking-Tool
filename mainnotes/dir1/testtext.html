@@ -20,14 +20,27 @@ blockquote {
 .view-container {
 	width: 40em;
 }
+pre {
+    background-color: #e0e0e0; 
+    color: #000000;          
+    padding: 0.5em;
+    border-radius: 5px;
+    overflow-x: auto;         
+    font-family: monospace;    
+    line-height: 1.6;
+   
+}
+
+
+
 </style>
 		<link rel="stylesheet" href="C:\Users\alter\Documents\Java\Minimal-Notetaking-Tool\template\style.css">
     </head>
 
     <body>
-<!-- START -->
 <div id="content">
 <div class="view-container">
+<!-- START -->
 <p>Introduction</p>
 
 <hr>
@@ -47,17 +60,17 @@ Nunc <i><b>in gravida orci</b></i>, ut placerat magna. </p>
 
 <p>More testing</p>
 
-<p>Etiam <i><b>facilisis</b></i>, odio nec consequat dapibus,<br>
+<p>Etiam <em><strong>facilisis</strong></em>, odio nec consequat dapibus,<br>
 ipsum dui fringilla mauris, vitae pretium ante ligula pulvinar nunc.</p>
 
-<blockquote> <i>test1</i>
-<blockquote><blockquote><blockquote><blockquote> <b>test2</b><br>
- <i><b>test3</b></i><br>
- <em>test1</em></blockquote></blockquote>
- <b>test2</b>
-<blockquote> <i><b>test3</b></i></blockquote></blockquote></blockquote>
- test \(6\)<br>
- test 7.</blockquote>
+<blockquote><i>test1</i>
+<blockquote><blockquote><blockquote><blockquote><b>test2</b><br>
+<i><b>test3</b></i><br>
+<em>test1</em></blockquote></blockquote>
+<p><strong>test2</strong></p>
+<blockquote><em><strong>test3</strong></em></blockquote></blockquote></blockquote>
+<p>test \(6\)<br>
+test 7.</blockquote>
 
 <p>Maecenas aliquam <br>
 in metus vitae aliquam. </p>
@@ -90,22 +103,22 @@ non porttitor</b></i> in, fermentum quis dui. </p>
 
 <p>Vestibulum ante nibh, interdum vitae porta vel, dictum vitae sem. <br>
 Duis ex tortor, imperdiet eget turpis nec, ullamcorper ullamcorper elit. <br>
-Praesent vehicula purus nisi, at tincidunt ex imperdiet commodo. <br>
-<pre><code>
-def gcd(a, b):
+Praesent vehicula purus nisi, at tincidunt ex imperdiet commodo. </p>
+
+<pre><code>def gcd(a, b):
   while b > 0:
     q = a 
     a = b
     b = q % b
   return a
 </code></pre>
-Maecenas eu semper ex, in dapibus lacus. 
+<p>Maecenas eu semper ex, in dapibus lacus. </p>
 $$\begin{aligned}
 1 + 1 &= 100 - 98 \\
 &= 40 - 38 \\
 &= 2  
 \end{aligned}$$
-Nam at risus eget mauris dictum dignissim et vitae dolor. </p>
+<p>Nam at risus eget mauris dictum dignissim et vitae dolor. </p>
 
 <hr>
 
@@ -118,8 +131,8 @@ In ac urna sit amet erat bibendum cursus ac in orci. </p>
 
 <p>Sed placerat, metus nec aliquet dapibus, mauris lacus porttitor purus, vitae luctus mi leo vitae lacus. </p>
 
-</div>
-</div>
 <!-- END -->
+</div>
+</div>
     </body>
 </html>
