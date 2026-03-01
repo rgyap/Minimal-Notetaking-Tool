@@ -181,6 +181,57 @@ One gets
 
 Headers and lists are **not allowed** inside a block quote and will not be rendered properly.
 
+## Lists
+
+### Unordered Lists
+
+To create an unordered list (a bullet-point list), start the line with a dash. For example,
+```
+- ***Top*** item
+- **Middle** item
+- *Second-to-the-last* item
+- Final item
+```
+When rendered, it will look something like this:
+
+- ***Top*** item
+- **Middle** item
+- *Second-to-the-last* item
+- Final item
+
+It is also *necessary* to place a blank line directly before and after an unordered list. Different levels in lists are also supported. To increase the level of a list by one, preceed the dash with *two spaces* (the converter is strict with the indentation). Lists levels can *only* be increased by 1. For example, the following list would render nicely
+```
+- A
+  - B
+    - C
+      - D
+    - E
+- F
+```
+
+- A
+  - B
+    - C
+      - D
+    - E
+- F
+
+But the following **will not** render as expected because *invalid HTML* will be generated.
+```
+- A
+      - B
+    - C
+  - D
+- E
+
+- A
+    - B
+        -C
+```
+
+
+
+
 ## Code
 
 To write text in a source-code style within a paragraph, one can put a backtick (`&#96;`) on both sides of the text. For example,
@@ -239,7 +290,7 @@ However, if any right square bracket (`]`) were to appear in the display text, i
 ```
 [[VERY SAD!\] sad violin](https://www.youtube.com/watch?v=QuNhTLVgV2Y)
 
-[Effects of mind control on members of the "Monolith" faction](https://stalker.fandom.com/wiki/Monolith#Effects\_of\_mind\_control)
+[Effects of brainwashing on members of the "Monolith" quasireligion](https://stalker.fandom.com/wiki/Monolith#Effects\_of\_mind\_control)
 ```
 
 When rendered, one gets
@@ -261,7 +312,7 @@ I also implemented Wiki-style links as a dedicated way to link to other **local 
 ```
 [[file_name.html|display text]]
 ```
-The converter will search for `file_name.html` in the directory that keeps all the HTML notes. If found, it will then put the absolute path of the file into the `href` attribute of the link tag (`<a>`). Underscores do not need to be preceeded by a backslash when inside a Wiki-style link.
+The converter will search for `file_name.html` in the directory that keeps all the *converted HTML* notes. If found, it will then put the absolute path of the file into the `href` attribute of the link tag (`<a>`). Right square brackets and underscores do not need to be preceeded by a backslash when inside a Wiki-style link. However, all right square brackets in the display text *must* be preceeded by a backslash.
 
 ## Images
 
@@ -272,3 +323,32 @@ The format for an image is as follows:
 ```
 ![Alt text for the image](link to the image)
 ```
+
+Just like with Markdown-style links, all right square brackets (`]`) inside the alt text must be preceeded by a backslash. Also like such links, in the link to the image, all underscores (`_`) must be preceeded by a backslash, and closing parentheses (`)`) must be replaced with `%29`.
+
+### Wiki-style Images
+
+Wiki-style images are also implemented. However, they are exclusively for local images located inside the directory that keeps all the *unconverted Markdown-formatted* notes. The format is as follows:
+
+```
+![[file_name.png|image_size]]
+```
+What the conversion program will do is find `file_name.png` in the aforementioned directory and then output its absolute path into the `src` attribute of the HTML image. Just like with Wiki-style links, all right square brackets (`]`) and underscores (`_`) do not need to be preceeded by a backslash in the file name.
+
+The `image_size` is any number that represents the desired width of the image in pixels (while maintaining the original proportions of the image). Accordingly, my program expects a number. But, if a percent is included, it will instead be sized relative to the width of the `div` that contains it. Indeed, other units allowed in HTML/CSS are allowed to be placed inside the `image_size` text.
+
+
+### Images in Links
+
+Following the rules mentioned above, it is possible for an image to act as a link. For example, one can do the following:
+
+```
+[![sobbing\](https://images.emojiterra.com/twitter/512px/1f62d.png)](https://www.youtube.com/watch?v=QuNhTLVgV2Y) 
+
+[![[oh\_god\_why.jpg|50\]\]](https://en.wikipedia.org/wiki/Sadness#Coping\_mechanisms)  
+
+[[TEST2.html|![[oh_god_why.jpg|100\]\]]]
+```
+
+
+

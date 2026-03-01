@@ -24,11 +24,9 @@ public final class Convert {
     private static Stack<Integer> sbq = new Stack<>(); // FOR BLOCK QUOTE PROCESSING
 	private static Stack<Integer> suo = new Stack<>(); // FOR UNORDERED LISTS
 	private static Stack<Integer> sor = new Stack<>(); // FOR ORDERED LISTS
-
+    
     public static ArrayList<String> conv(ArrayList<ArrayList<Character>> lines) {
         ArrayList<String> converts = new ArrayList<String>();
-        
-        boolean formatable = st.contains(5) || st.contains(6) || st.contains(7) || st.contains(8);
         
         // Conversion magic
         
@@ -40,10 +38,12 @@ public final class Convert {
                 continue;    
             } 
             
-            
+            // Stack lookups are not constant time, but I think these stacks usually don't stack high.
+            // Thus, I think I can get away with this. 
 			boolean notFormattable = st.contains(5) || st.contains(6) || st.contains(7) || st.contains(8);  // no headers inside math or code!
-
-            if (!notFormattable) { // BEGIN FORMATTABLE BLOCK
+            
+            
+            if (!notFormattable) { 
 
                  
                 // headings
@@ -76,7 +76,7 @@ public final class Convert {
                 s = processLinks(s);
                 s = processLinks2(s);
 				
-				 s = processImages(s); 
+				s = processImages(s); 
                 s = processImages2(s); 
         
                 // process blockquotes
@@ -84,25 +84,25 @@ public final class Convert {
                     s = processBlockQuotes(lines, s, j, sbq);
                 }		
 				
-				if (s.get(0) == '-' || !suo.empty()) {
-					s = processLists(lines, s, j, suo, false);
-				}
-				if ((1 < s.size() && Character.isDigit(s.get(0)) && s.get(1) == '.') || !sor.empty()) {
-					s = processLists(lines, s, j, sor, true);
-				}
+                ArrayList<Character> s1 = new ArrayList<Character>(s);
 
-            } // END OF FORMATTABLE BLOCK
+               // try {
+                    if (s.get(0) == '-' || !suo.empty()) {
+                        s = processLists(lines, s, j, suo, false);
+                    }
+                    // ORDERED LISTS MUST START WITH "1."
+                    if ((1 < s.size() && Character.isDigit(s.get(0)) && s.get(1) == '.') || !sor.empty()) { 
+                        s = processLists(lines, s, j, sor, true);
+                    }
+                //} catch (Exception e)  {
+               //     converts.add("</ul>");
+                //    s = s1;
+               // }
+
+            } 
     
             // formatting
             s = lineFormatting(s);
-
-
-            if (!notFormattable) { 
-                // To allow images inside links to process.
-                s = processImages(s); 
-                s = processImages22(s); 
-				// Result: ![sobbing\](https://images.emojiterra.com/twitter/512px/1f62d.png) will still render as an image.
-            } 
 
             String rrr = "";
             for (char c : s) {
@@ -163,27 +163,26 @@ public final class Convert {
 				continue;
 			}
 			
-			//if (!active) {
-			//	continue;
-			//}
-			
 			String prev = (j-1 >= 0) ? res.get(j-1) : "";
 			if (active && (prev.length() == 0 || endsWithWhatClosingTag(prev).length() != 0)) {
 				curr = "<p>" + curr;
 			}
 				
 			String next = (j+1 < res.size()) ? res.get(j+1) : "";
+
+            boolean active2 = active || lastStart.equals("<blockquote>");
 			
-			if (next.length() != 0 && startsWithWhatTag(next).length() == 0) {
-				if (active || lastStart.equals("<blockquote>")) {
-					curr = curr + "<br>";
-				}
+			if (next.length() != 0 && startsWithWhatTag(next).length() == 0 && active2) {
+				//if (active || lastStart.equals("<blockquote>")) {
+				curr = curr + "<br>";
+				//}
 			} else if (active) {
 				curr = curr + "</p>";
 			}
 			
-			if (active || lastStart.equals("<blockquote>")) {
-				res.set(j, curr);
+			//if (active || lastStart.equals("<blockquote>")) {
+			if (active2) {
+                res.set(j, curr);
 			}
 			
 		}
@@ -297,9 +296,9 @@ public final class Convert {
 		
 		if (listable(next) && nextCount < currCount) {
 			for (int i = 0 ; i < currCount - nextCount; i++) {
-				arr.add(xlc);
-				stack.pop();
 				if (!stack.empty()) {
+                    arr.add(xlc);
+                    stack.pop();
 					arr.add("</li>");
 				}
 			}
@@ -307,9 +306,9 @@ public final class Convert {
 		
 		if (!listable(next) && nextnextCount < currCount) {
 			for (int i = 0 ; i < currCount - nextnextCount; i++) {
-				arr.add(xlc);
-				stack.pop();
 				if (!stack.empty()) {
+                    arr.add(xlc);
+                    stack.pop();
 					arr.add("</li>");
 				}
 			}
@@ -465,6 +464,9 @@ public final class Convert {
                 int j = i + 1;
                 
                 while (j < arr.size() && (arr.get(j) != ']' || arr.get(j-1) == '\\')) {
+                    if (arr.get(j) == '\\') {
+                        j++;
+                    }
                     linkText = linkText + arr.get(j);
                     j++;
                 }
@@ -539,6 +541,9 @@ public final class Convert {
                 int j = i + 1;
                 
                 while (j < arr.size() && (arr.get(j) != ']' || arr.get(j-1) == '\\')) {
+                    if (arr.get(j) == '\\') {
+                        j++;
+                    } 
                     linkText = linkText + arr.get(j);
                     j++;
                 }
@@ -699,8 +704,9 @@ public final class Convert {
         s.add((char)0);
         s.add((char)0);
         s.add((char)0);
-        
+
         for (int i = 0; i < s.size()-3; i++) {
+
             // Escape
             if (s.get(i) == '\\' && !st.contains(5) && !st.contains(6) && !st.contains(7) && !st.contains(8)) {
                 res = res + s.get(i+1);
@@ -966,7 +972,10 @@ public final class Convert {
                 
                 j++;
 
-                while (j < arr.size() && arr.get(j) != ']') {
+                while (j < arr.size() && (arr.get(j) != ']' || arr.get(j-1) == '\\')) {
+                    if (arr.get(j) == '\\') {
+                        j++;
+                    }
                     displayText = displayText + arr.get(j);
                     j++;
                 }
