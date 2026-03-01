@@ -3,11 +3,66 @@
     <head>
         <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-svg.js"></script>
 <style>
+:root {
+	/** Base colors */
+	--clr-dark-a0: #000000;
+	--clr-light-a0: #ffffff;
+
+	/** Theme primary colors */
+	--clr-primary-a0: #d1d1d1;
+	--clr-primary-a10: #d6d6d6;
+	--clr-primary-a20: #dbdbdb;
+	--clr-primary-a30: #e0e0e0;
+	--clr-primary-a40: #e5e5e5;
+	--clr-primary-a50: #eaeaea;
+
+	/** Theme surface colors */
+	--clr-surface-a0: #121212;
+	--clr-surface-a10: #282828;
+	--clr-surface-a20: #3f3f3f;
+	--clr-surface-a30: #575757;
+    --clr-surface-a40: #717171;
+    --clr-surface-a50: #8b8b8b;
+    
+    /** Theme tonal surface colors */
+    --clr-surface-tonal-a0: #222222;
+    --clr-surface-tonal-a10: #373737;
+    --clr-surface-tonal-a20: #4c4c4c;
+    --clr-surface-tonal-a30: #636363;
+    --clr-surface-tonal-a40: #7b7b7b;
+    --clr-surface-tonal-a50: #949494;
+    
+    /** Success colors */
+    --clr-success-a0: #22946e;
+    --clr-success-a10: #47d5a6;
+    --clr-success-a20: #9ae8ce;
+    
+    /** Warning colors */
+    --clr-warning-a0: #a87a2a;
+    --clr-warning-a10: #d7ac61;
+    --clr-warning-a20: #ecd7b2;
+    
+    /** Danger colors */
+    --clr-danger-a0: #9c2121;
+    --clr-danger-a10: #d94a4a;
+    --clr-danger-a20: #eb9e9e;
+    
+    /** Info colors */
+    --clr-info-a0: #21498a;
+    --clr-info-a10: #4077d1;
+	--clr-info-a20: #92b2e5;
+}
+
+body {
+	color: var(--clr-primary-a50);
+	background-color: var(--clr-surface-a0);
+}
+
 blockquote {
-	background: #f9f9f9;
-	border-left: 5px solid #ccc;
+	border-left: 5px solid var(--clr-primary-a0);
 	padding-left: 5px;
 	margin-left: 1em;
+	background-color: var(--clr-surface-a0);
 }
 
 #content {
@@ -21,8 +76,8 @@ blockquote {
 	width: 40em;
 }
 pre {
-    background-color: #e0e0e0; 
-    color: #000000;          
+    background-color: var(--clr-surface-a10);
+    color: #fff;          
     padding: 0.5em;
     border-radius: 5px;
     overflow-x: auto;         
@@ -32,9 +87,12 @@ pre {
 }
 
 
+ol > li::marker {
+	content: counters(list-item,'.') '. ';
+}
 
 </style>
-		<link rel="stylesheet" href="C:\Users\alter\Documents\Java\Minimal-Notetaking-Tool\template\style.css">
+		<!--<link rel="stylesheet" href="C:\Users\alter\Documents\Java\Minimal-Notetaking-Tool\template\style.css">-->
     </head>
 
     <body>
@@ -53,8 +111,8 @@ pre {
 <h1>More Sad</h1>
 
 <p>Another test<br>
-<a href='/home/RGY/Documents/Programming/Minimal-Notetaking-Tool/./mainnotes/TEST1.html'>File: TEST1.md</a><br>
-<img src='/home/RGY/Documents/Programming/Minimal-Notetaking-Tool/./notes/oh_god_why.jpg' width='50'></p>
+<a href=''>File: TEST1.md</a><br>
+<img src='C:\Users\alter\Documents\Java\Minimal-Notetaking-Tool\.\notes\oh_god_why.jpg' width='50'></p>
 
 <hr>
 
@@ -63,9 +121,9 @@ pre {
 <p><a href='https://www.youtube.com/watch?v=QuNhTLVgV2Y'><img src='https://images.emojiterra.com/twitter/512px/1f62d.png' alt='sobbing'></a>  </p>
 
 
-<p><a href='https://en.wikipedia.org/wiki/Sadness#Coping_mechanisms'><img src='/home/RGY/Documents/Programming/Minimal-Notetaking-Tool/./notes/oh_god_why.jpg' width='50'></a>  </p>
+<p><a href='https://en.wikipedia.org/wiki/Sadness#Coping_mechanisms'><img src='C:\Users\alter\Documents\Java\Minimal-Notetaking-Tool\.\notes\oh_god_why.jpg' width='50'></a>  </p>
 
-<p><a href='/home/RGY/Documents/Programming/Minimal-Notetaking-Tool/./mainnotes/dir2/TEST2.html'><img src='/home/RGY/Documents/Programming/Minimal-Notetaking-Tool/./notes/oh_god_why.jpg' width='100'></a></p>
+<p><a href='C:\Users\alter\Documents\Java\Minimal-Notetaking-Tool\.\mainnotes\dir2\TEST2.html'><img src='C:\Users\alter\Documents\Java\Minimal-Notetaking-Tool\.\notes\oh_god_why.jpg' width='100'></a></p>
 
 <!-- END -->
 </div>

@@ -2,6 +2,8 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Stack;
 import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class Convert {
 
@@ -20,16 +22,28 @@ public final class Convert {
     private static HashSet<String> blacklistedTags = new HashSet<String>(Arrays.asList(tags));
     private static HashSet<String> blacklistedTagsClose = new HashSet<String>(Arrays.asList(tagsClose));
 	
-	private static Stack<Integer> st = new Stack<>(); // FOR FORMATTING
-    private static Stack<Integer> sbq = new Stack<>(); // FOR BLOCK QUOTE PROCESSING
-	private static Stack<Integer> suo = new Stack<>(); // FOR UNORDERED LISTS
-	private static Stack<Integer> sor = new Stack<>(); // FOR ORDERED LISTS
     
+	public static final HashMap<String, String[]> forms = new HashMap<String, String[]>(Map.ofEntries(
+        Map.entry("*", new String[]{"<i>", "</i>"}),
+		Map.entry("**", new String[]{"<b>", "</b>"}),
+		Map.entry("***", new String[]{"<i><b>", "</b></i>"}),
+		Map.entry("_", new String[]{"<em>", "</em>"}),
+		Map.entry("__", new String[]{"<strong>", "</strong>"}),
+		Map.entry("___", new String[]{"<em><strong>", "</strong></em>"}),
+		Map.entry("`", new String[]{"<code>", "</code>"}),
+		Map.entry("```", new String[]{"<pre><code>", "</code></pre>"}),
+		Map.entry("$", new String[]{"\\(", "\\)"}),
+		Map.entry("$$", new String[]{"$$", "$$"})
+    ));
+	
     public static ArrayList<String> conv(ArrayList<ArrayList<Character>> lines) {
         ArrayList<String> converts = new ArrayList<String>();
-        
-        // Conversion magic
-        
+		
+		Stack<String> sst = new Stack<String>();
+		Stack<Integer> sbq = new Stack<>(); // FOR BLOCK QUOTE PROCESSING
+	    Stack<Integer> suo = new Stack<>(); // FOR UNORDERED LISTS
+	    Stack<Integer> sor = new Stack<>(); // FOR ORDERED LISTS
+		
         for (int j = 0; j < lines.size(); j++) {
             ArrayList<Character> s = new ArrayList<>(lines.get(j)); 
 
@@ -40,18 +54,16 @@ public final class Convert {
             
             // Stack lookups are not constant time, but I think these stacks usually don't stack high.
             // Thus, I think I can get away with this. 
-			boolean notFormattable = st.contains(5) || st.contains(6) || st.contains(7) || st.contains(8);  // no headers inside math or code!
-            
+			boolean notFormattable = sst.contains("$") || sst.contains("$$") || sst.contains("`") || sst.contains("```");
             
             if (!notFormattable) { 
 
-                 
                 // headings
-
-                s = processHeader1(s); // hash style
- 
-                if (j < lines.size() - 1 && threeOrMoreLineCharacters(lines.get(j+1))) { // lines style
-                    
+				if (s.get(0) == '#') {
+					s = processHeader1(s); // hash style
+				}
+				
+                if (j < lines.size() - 1 && threeOrMoreLineCharacters(lines.get(j+1))) { // lines style    
                     int hc = 0;
                     if (lines.get(j+1).get(0) == '-') {
                         hc = 2;
@@ -82,27 +94,21 @@ public final class Convert {
                 // process blockquotes
                 if (s.size() >= 1 && s.get(0) == '>') {
                     s = processBlockQuotes(lines, s, j, sbq);
-                }		
-				
-                ArrayList<Character> s1 = new ArrayList<Character>(s);
+                }
 
-               // try {
-                    if (s.get(0) == '-' || !suo.empty()) {
-                        s = processLists(lines, s, j, suo, false);
-                    }
-                    // ORDERED LISTS MUST START WITH "1."
-                    if ((1 < s.size() && Character.isDigit(s.get(0)) && s.get(1) == '.') || !sor.empty()) { 
-                        s = processLists(lines, s, j, sor, true);
-                    }
-                //} catch (Exception e)  {
-               //     converts.add("</ul>");
-                //    s = s1;
-               // }
+                if (s.get(0) == '-' || !suo.empty()) {
+                    s = processLists(lines, s, j, suo, false);
+                }
+                // ORDERED LISTS MUST START WITH "1."
+                if ((1 < s.size() && Character.isDigit(s.get(0)) && s.get(1) == '.') || !sor.empty()) { 
+                    s = processLists(lines, s, j, sor, true);
+                }
+
 
             } 
     
             // formatting
-            s = lineFormatting(s);
+			s = lineFormatting(s, sst);
 
             String rrr = "";
             for (char c : s) {
@@ -244,12 +250,19 @@ public final class Convert {
 			nextnext = lines.get(index+2);
 		}
 		
+		int prevprevCount = countSpacesAtStart(prevprev) / IND;
         int prevCount = countSpacesAtStart(prev) / IND;
         int nextCount = countSpacesAtStart(next) / IND;
         int currCount = countSpacesAtStart(s) / IND;
 		int nextnextCount = countSpacesAtStart(nextnext) / IND;
 		
-		if (!listable(s)) {
+		boolean ppl = listable(prevprev, ordered);
+		boolean pl = listable(prev, ordered);
+		boolean cl = listable(s, ordered);
+		boolean nl = listable(next, ordered);
+		boolean nnl = listable(nextnext, ordered);
+		
+		if (!cl) {
 			if (!stack.empty()) {
 				return new ArrayList<Character>();
 			}
@@ -260,41 +273,53 @@ public final class Convert {
 			return s;
 		}
 		
-		
-		if (!listable(prevprev) && !listable(prev) && listable(s)) {
+		if (cl && !pl && (!ppl || (ppl && prevprevCount < currCount))) {
 			arr.add(xl);
 			stack.push(currCount);
 		}
 		
-		if (prevCount < currCount && listable(prev) && listable(s)) {
+		
+		if (prevCount < currCount && pl && cl) {
 			arr.add(xl);
 			stack.push(currCount);
 		}
-		
-		if (!stack.empty() && listable(s)) {
+
+		if (!stack.empty() && cl) {
 			arr.add("<li>");
 		}
 		
+		boolean outContentForOrderedLists = false;
+			
 		for (int i = IND*currCount+1; i < s.size(); i++) {
-			if (ordered && i == IND*currCount+1) {
-				continue;
+			if (ordered) {
+				if (s.get(i) == '.') {
+					outContentForOrderedLists = true;
+					continue;
+				}
+				if (Character.isDigit(s.get(i)) && !outContentForOrderedLists) {
+					continue;
+				}
 			}
 			arr.add(String.valueOf(s.get(i)));
 		}
 		
-		if (!listable(next) && listable(nextnext) && nextCount == currCount+1) {
+		//if (!nl && nnl && nextCount == currCount+1) {
+		if (!nl && nextCount == currCount+1) {
 			arr.add("<p>");
 			for (int i = IND*nextCount; i < next.size(); i++) {
 				arr.add(String.valueOf(next.get(i)));
 			}
 			arr.add("</p>");
+			if (nnl) {
+				lines.remove(index+1);
+			} // linear-time operation, but this is to address the case where there is text added below the last item of a list.
 		}
 		
-		if (listable(s) && (!listable(next) || nextCount <= currCount)) {
+		if (cl && (!nl || nextCount <= currCount)) {
 			arr.add("</li>");
 		}
 		
-		if (listable(next) && nextCount < currCount) {
+		if (nl && nextCount < currCount) {
 			for (int i = 0 ; i < currCount - nextCount; i++) {
 				if (!stack.empty()) {
                     arr.add(xlc);
@@ -304,7 +329,7 @@ public final class Convert {
 			}
 		} 
 		
-		if (!listable(next) && nextnextCount < currCount) {
+		if (!nl && nextnextCount < currCount) {
 			for (int i = 0 ; i < currCount - nextnextCount; i++) {
 				if (!stack.empty()) {
                     arr.add(xlc);
@@ -314,7 +339,7 @@ public final class Convert {
 			}
 		}
 		
-		if (!listable(next) && !listable(nextnext) && !stack.empty()) {
+		if (!nl && !nnl && !stack.empty()) {
 			arr.add(xlc);
 			stack.pop();
 		}
@@ -345,16 +370,24 @@ public final class Convert {
 		return result;
 	}
 	
-	private static boolean listable(ArrayList<Character> line) {
+	private static boolean listable(ArrayList<Character> line, boolean ordered) {
 		int spaces = countSpacesAtStart(line);
-		if (spaces < line.size() && line.get(spaces) == '-') {
-			return true;
-		}
-		if (spaces + 1 < line.size() && Character.isDigit(line.get(spaces)) && line.get(spaces+1) == '.') {
-			return true;
-		}
 		
-	
+		if (ordered) {
+			if (spaces < line.size() && Character.isDigit(line.get(spaces))) {
+				int j = spaces;
+				while (j < line.size() && Character.isDigit(line.get(j))) {
+					j++;
+				}
+				if (j < line.size() && line.get(j) == '.') {
+					return true;
+				}
+			}
+		} else {
+			if (spaces < line.size() && line.get(spaces) == '-') {
+				return true;
+			}
+		}
 		return false;
 	}
 	
@@ -395,8 +428,8 @@ public final class Convert {
         if (nextCount < currCount) {
             int diff = currCount - nextCount;
             for (int i = 0; i < diff; i++) {
-                stack.pop();
-                arr.add("</blockquote>");
+				stack.pop();
+				arr.add("</blockquote>");
             }
         }
 
@@ -666,144 +699,6 @@ public final class Convert {
         
         return out;
     }
-    
-    private static ArrayList<Character> lineFormatting(ArrayList<Character> s1) {
-        ArrayList<Character> s = new ArrayList<>(s1);
-        
-        /*
-        LEGEND for the stack st:
-        0 -> Uh, nothing!
-        1 -> *
-        2 -> **
-        3 -> ***
-        4 -> _
-        5 -> $
-        6 -> $$
-        7 -> `
-        8 -> ```
-		9 -> __
-		10 -> ___
-        */
-		         
-        String[][] formatters = {
-            {"", ""},                           // 0
-            {"<i>", "</i>"},                    // 1
-            {"<b>", "</b>"},                    // 2
-            {"<i><b>", "</b></i>"},             // 3
-            {"<em>", "</em>"},                  // 4
-            {"\\(", "\\)"},                     // 5
-            {"$$", "$$"},                       // 6
-            {"<code>", "</code>"},              // 7
-            {"<pre><code>", "</code></pre>"},   // 8
-			{"<strong>", "</strong>"},          // 9
-			{"<em><strong>", "</strong></em>"}  // 10
-        };
-        String res = "";
-        
-        // padding to not make Java angry with out-of-bounds exceptions
-        s.add((char)0);
-        s.add((char)0);
-        s.add((char)0);
-
-        for (int i = 0; i < s.size()-3; i++) {
-
-            // Escape
-            if (s.get(i) == '\\' && !st.contains(5) && !st.contains(6) && !st.contains(7) && !st.contains(8)) {
-                res = res + s.get(i+1);
-                i++;
-                continue;
-            } 
-
-            // Bold and Italics
-            if ((s.get(i) == '*' || s.get(i) == '_') && !st.contains(5) && !st.contains(6) && !st.contains(7) && !st.contains(8)) {
-                char emph = s.get(i);
-                int ac = 0;
-
-                while (ac < 3 && s.get(i+ac) == emph) {
-                    ac++;
-                }
-                
-                i += ac - 1;
-                
-				if (emph == '_') {
-					if (ac == 1) {
-						ac = 4;
-					}
-					if (ac == 2) {
-						ac = 9;
-					}
-					if (ac == 3) {
-						ac = 10;
-					}
-				}
-                
-                if (st.contains(ac)) {
-                    st.pop();
-                    res = res + formatters[ac][1];
-                } else {
-                    st.push(ac);
-                    res = res + formatters[ac][0];
-                
-                }
-                continue; 
-            }
-
-            // Code Blocks
-            if (s.get(i) == '`' && !st.contains(5) && !st.contains(6)) {
-                int cc = 0;
-                int m = 0;
-                if ((s.get(i+1) == '`') && (s.get(i+2) == '`')) {
-                    cc++;
-                    m = 2;
-                }
-                i += m; 
-                int k = 7+cc;
-				 
-				if ((k == 7 && !st.contains(8)) || k == 8) {
-					if (st.contains(k)) {
-						st.pop();
-						res = res + formatters[k][1];
-					} else {
-						st.push(k);
-						res = res + formatters[k][0];
-					}
-					continue;
-				}
-            }
-
-            // MathJax 
-            if (s.get(i) == '$' && !st.contains(7) && !st.contains(8)) {
-                int dc = 0; 
-                if (s.get(i+1) == '$') {
-                    dc++;
-                }
-                
-                i += dc;
-                int k = 5 + dc;
-                if (st.contains(k)) {
-                    st.pop();
-                    res = res + formatters[k][1];
-                } else {
-                    st.push(k);
-                    res = res + formatters[k][0];
-                }
-                continue;
-            } 
-			
-			if ((st.contains(7) || st.contains(8)) && s.get(i) == '<') {
-				res = res + "&lt;";
-				continue;
-			}
-			
-			res = res + s.get(i);
-        } 
-        ArrayList<Character> out = new ArrayList<Character>();
-        for (char c : res.toCharArray()) {
-            out.add(c);
-        }
-
-        return out;
-    }
 
     private static ArrayList<Character> processImages2(ArrayList<Character> in) {
 		ArrayList<Character> arr = new ArrayList<Character>(in);
@@ -877,7 +772,6 @@ public final class Convert {
 
 	}	
 	
-	
 	private static ArrayList<Character> processImages22(ArrayList<Character> in) {
 		ArrayList<Character> arr = new ArrayList<Character>(in);
         ArrayList<Character> result = new ArrayList<Character>();
@@ -941,11 +835,6 @@ public final class Convert {
 
 	}	
 	
-	
-	
-	
-	
-
 	private static ArrayList<Character> processLinks2(ArrayList<Character> in) {
 		ArrayList<Character> arr = new ArrayList<Character>(in);
         ArrayList<Character> result = new ArrayList<Character>();
@@ -1014,4 +903,216 @@ public final class Convert {
         return result;
 
 	}	
+	
+	
+	
+	private static ArrayList<Character> lineFormatting(ArrayList<Character> s1, Stack<String> sst) {
+		ArrayList<Character> s = new ArrayList<>(s1);
+		
+		String res = "";
+		
+		// padding to not make Java angry with out-of-bounds exceptions
+		s.add((char)0);
+		s.add((char)0);
+		s.add((char)0);
+		
+
+		for (int i = 0; i < s.size()-3; i++) {
+			boolean noMath = !sst.contains("$") && !sst.contains("$$");
+			boolean noCode = !sst.contains("`") && !sst.contains("```");
+			boolean noMathNorCode = noMath && noCode;
+			
+			// Escape
+			if (s.get(i) == '\\' && noMathNorCode) {
+				res = res + s.get(i+1);
+				i++;
+				continue;
+			} 
+
+			// Bold and Italics
+			if ((s.get(i) == '*' || s.get(i) == '_') && noMathNorCode) {
+				char emph = s.get(i);
+				int j = 0;
+				String mod = "";
+				
+				while (j < 3 && s.get(i+j) == emph) {
+					mod = mod + s.get(i+j);
+					j++;
+				}
+				
+				i += j - 1;
+				
+				if (sst.contains(mod)) {
+					sst.pop();
+					res = res + forms.get(mod)[1];
+				} else {
+					sst.push(mod);
+					res = res + forms.get(mod)[0];
+				}
+				continue; 
+			}
+
+			// Code Blocks
+			if (s.get(i) == '`' && noMath) {
+				String mod = "`";
+				int m = 0;
+				if ((s.get(i+1) == '`') && (s.get(i+2) == '`')) {
+					m = 2;
+					mod = "```";
+				}
+				i += m; 
+				
+				if ((m == 0 && !sst.contains(8)) || m == 2) {
+					if (sst.contains(mod)) {
+						sst.pop();
+						res = res + forms.get(mod)[1];
+					} else {
+						sst.push(mod);
+						res = res + forms.get(mod)[0];
+					}
+					continue;
+				}
+			}
+
+			// MathJax 
+			if (s.get(i) == '$' && noCode) {
+				String mod = "$";
+				int m = 0; 
+				if (s.get(i+1) == '$') {
+					m = 1;
+					mod = "$$";
+				}
+				
+				i += m;
+				
+				if (sst.contains(mod)) {
+					sst.pop();
+					res = res + forms.get(mod)[1];
+				} else {
+					sst.push(mod);
+					res = res + forms.get(mod)[0];
+				}
+				continue;
+			} 
+			
+			if ((sst.contains("`") || sst.contains("```")) && s.get(i) == '<') {
+				res = res + "&lt;";
+				continue;
+			}
+			
+			res = res + s.get(i);
+		} 
+		ArrayList<Character> out = new ArrayList<Character>();
+		for (char c : res.toCharArray()) {
+			out.add(c);
+		}
+
+		return out;
+	}
+	
+	/*
+	private static ArrayList<Character> lineFormatting(ArrayList<Character> s1, Stack<Integer> st) {
+        ArrayList<Character> s = new ArrayList<>(s1);
+        
+        String res = "";
+        
+        // padding to not make Java angry with out-of-bounds exceptions
+        s.add((char)0);
+        s.add((char)0);
+        s.add((char)0);
+		
+
+        for (int i = 0; i < s.size()-3; i++) {
+			
+			boolean noMath = !st.contains(9) && !st.contains(10);
+			boolean noCode = !st.contains(7) && !st.contains(8);
+			boolean noCodeNorMath = noMath && noCode;
+
+            // Escape
+            if (s.get(i) == '\\' && noCodeNorMath) {
+                res = res + s.get(i+1);
+                i++;
+                continue;
+            } 
+
+            // Bold and Italics
+            if ((s.get(i) == '*' || s.get(i) == '_') && noCodeNorMath) {
+                char emph = s.get(i);
+                int ac = 0;
+
+                while (ac < 3 && s.get(i+ac) == emph) {
+                    ac++;
+                }
+                
+                i += ac - 1;
+                
+				if (emph == '_') {
+					ac += 3;
+				}
+                
+                if (st.contains(ac)) {
+                    st.pop();
+                    res = res + formatters[ac][1];
+                } else {
+                    st.push(ac);
+                    res = res + formatters[ac][0];
+                
+                }
+                continue; 
+            }
+
+            // Code Blocks
+            if (s.get(i) == '`' && noMath) {
+                int m = 0;
+                if ((s.get(i+1) == '`') && (s.get(i+2) == '`')) {
+                    m = 1;
+                }
+                i = i + m + m; 
+                int k = 7 + m;
+				 
+				if ((k == 7 && !st.contains(8)) || k == 8) {
+					if (st.contains(k)) {
+						st.pop();
+						res = res + formatters[k][1];
+					} else {
+						st.push(k);
+						res = res + formatters[k][0];
+					}
+					continue;
+				}
+            }
+
+            // MathJax 
+            if (s.get(i) == '$' && noCode) {
+                int dc = 0; 
+                if (s.get(i+1) == '$') {
+                    dc++;
+                }
+                
+                i += dc;
+                int k = 9 + dc;
+                if (st.contains(k)) {
+                    st.pop();
+                    res = res + formatters[k][1];
+                } else {
+                    st.push(k);
+                    res = res + formatters[k][0];
+                }
+                continue;
+            } 
+			
+			if (!noCode && s.get(i) == '<') {
+				res = res + "&lt;";
+				continue;
+			}
+			
+			res = res + s.get(i);
+        } 
+        ArrayList<Character> out = new ArrayList<Character>();
+        for (char c : res.toCharArray()) {
+            out.add(c);
+        }
+
+        return out;
+    }*/
 }

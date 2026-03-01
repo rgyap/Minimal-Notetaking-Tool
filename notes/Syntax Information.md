@@ -9,12 +9,12 @@ To make sure I covered enough, I am following the outline for the basic syntax o
 To create a heading, type a hash (`#`) followed by a space and then the name of the heading. For example,
 
 ```
-# Heading 1 
-## Heading 2 
-### Heading 3 
-#### Heading 4 
-##### Heading 5 
-###### Heading 6 
+# Heading 1 (<h1>)
+## Heading 2 (<h2>) 
+### Heading 3 (<h3>)
+#### Heading 4 (<h4>)
+##### Heading 5 (<h5>)
+###### Heading 6 (<h6>)
 ```
 
 Leaving empty lines before or after a header is recommended but not necessary.
@@ -229,8 +229,135 @@ But the following **will not** render as expected because *invalid HTML* will be
         -C
 ```
 
+### Ordered Lists
+
+To create an ordered list, start the line with `1.`, a one followed by a period. Other items can then be added to the list by starting the next line starting with a number followed by a period. The level of a list can be increased by adding *two spaces* at the front, but only an increase of one is allowed. Also, make sure to have one blank line before and after a list. For example,
+
+```
+1. One
+2. Two
+  1. Twoo
+    1. Twooo 
+3. Three
+  1. Threee
+  2. Threeee
+4. Four
+```
+
+will appear as
+
+1. One
+2. Two
+  1. Twoo
+    1. Twooo 
+3. Three
+  1. Threee
+  2. Threeee
+4. Four
+
+In fact, those numbers used to type out the list actually *do not matter* at all, provided that the *very first item* of the list starts with `1.`. For example, typing
+
+```
+1. One
+2000. Two
+  21. Twoo
+    2101. Twooo 
+3. Three
+  31. Threee
+  332. Threeee
+5. Four
+```
+
+would result in the same ordered list shown previously.
+
+### Adding Text Below an Item of a List
+
+To add content below an item of a list (whether ordered or unordered), add a line directly below said list item, type anything within that single line, then add a number of spaces at the start of the new line equal to two more than the number of spaces that preceeds the list item. For example, the lists
+```
+- Lorem ipsum
+  Dolor sit amet
+  - Consectetur 
+    Adipiscing elit.
+  - Sed
+    - Do eiusmod tempor incididunt
+      Ut labore
+    - Et dolore
+      Magna aliqua
+  - Ut enim ad minim veniam
+```
+would appear as
+
+- Lorem ipsum
+  Dolor sit amet
+  - Consectetur 
+    Adipiscing elit.
+  - Sed
+    - Do eiusmod tempor incididunt
+      Ut labore
+    - Et dolore
+      Magna aliqua
+  - Ut enim ad minim veniam
+
+This also works for ordered lists.
 
 
+Text to be added below a list **cannot** be split into different lines or paragraphs. To do so, please use `<p>` and `<br>` tags instead of making new lines. For example,
+
+1. First Case
+  <p>Lorem ipsum dolor sit amet consectetur adipiscing elit.</p><p>Vivamus sollicitudin id purus non bibendum.</p>
+2. Second Case
+  Curabitur fermentum sodales purus, eu tincidunt diam dictum quis.<br>Proin facilisis nisl non purus congue pellentesque at id metus.
+
+
+
+### Separating Two Lists of the Same Type
+
+Two lists of the same type (ordered or unordered list) *must* be separated by *two* empty lines. For example, notice how the following
+```
+1. One
+3. Two
+3. Three
+
+1. Four
+2. Five
+3. Six
+```
+does not really appear as it was written but instead is rendered as
+1. One
+3. Two
+3. Three
+
+1. Four
+2. Five
+3. Six
+
+However, if instead we had
+```
+1. One
+3. Two
+3. Three
+
+
+1. Four
+2. Five
+3. Six
+```
+
+It will appear as intended:
+
+1. One
+3. Two
+3. Three
+
+
+1. Four
+2. Five
+3. Six
+
+
+### Combining Unordered and Ordered Lists
+
+Doing so will not be supported. So, it's either one writes a fully unordered list or a fully ordered list, no mixing.
 
 ## Code
 
@@ -297,7 +424,7 @@ When rendered, one gets
 
 > [[VERY SAD!\] sad violin](https://www.youtube.com/watch?v=QuNhTLVgV2Y)
 >
-> [Effects of mind control on members of the "Monolith" faction](https://stalker.fandom.com/wiki/Monolith#Effects\_of\_mind\_control)
+> [Effects of brainwashing on members of the "Monolith" quasireligion](https://stalker.fandom.com/wiki/Monolith#Effects\_of\_mind\_control)
 
 Without `https://` in the link, a browser might assume that the thing being linked to is a local file located in the same directory as the HTML file that is displaying said link.
 
@@ -351,4 +478,10 @@ Following the rules mentioned above, it is possible for an image to act as a lin
 ```
 
 
+## Escaping Characters
 
+If a backslash precedes a character, the program would ensure that it remains in the output unmodified. For example, typing `**\*this\***` would appear as **\*this\*** (boldface `*this*`) and not ***this*** (boldface and italic `this`).
+
+## HTML
+
+HTML is fully supported as this program essentially just copies text from a Markdown document and outputs it into an HTML document.
