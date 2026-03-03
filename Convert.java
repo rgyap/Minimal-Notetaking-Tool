@@ -16,11 +16,11 @@ public final class Convert {
 	
 	private static String[] tags = {
         "$$", "<h1>", "<h2>", "<h3>", "<h4>", "<h5>", "<h6>",
-        "<hr>", "<blockquote>", "<!--", "<div>", ">", "<pre>", "<ul>", "<ol>"
+        "<hr>", "<blockquote>", "<!--", "<div>", ">", "<pre>", "<ul>", "<ol>", "<table>", "<tr>"
     }; 
     private static String[] tagsClose = {
         "$$", "</h1>", "</h2>", "</h3>", "</h4>", "</h5>", "</h6>",
-        "</hr>", "</blockquote>", "-->", "</div>", "</pre>", "</ul>", "</ol>"
+        "</hr>", "</blockquote>", "-->", "</div>", "</pre>", "</ul>", "</ol>", "</table>", "</tr>"
     }; 
     private static HashSet<String> blacklistedTags = new HashSet<String>(Arrays.asList(tags));
     private static HashSet<String> blacklistedTagsClose = new HashSet<String>(Arrays.asList(tagsClose));
@@ -48,6 +48,7 @@ public final class Convert {
 		Stack<Integer> sbq = new Stack<Integer>(); // FOR BLOCK QUOTE PROCESSING
 	    Stack<Integer> suo = new Stack<Integer>(); // FOR UNORDERED LISTS
 	    Stack<Integer> sor = new Stack<Integer>(); // FOR ORDERED LISTS
+		Stack<Integer> stb = new Stack<Integer>(); // FOR TABLES
 		
         for (int j = 0; j < lines.size(); j++) {
             ArrayList<Character> s = new ArrayList<>(lines.get(j)); 
@@ -96,11 +97,16 @@ public final class Convert {
 				s = processImages(s); 
                 s = processImages2(s, currPath); 
         
+		
+				if (s.get(0) == '|') {
+					s = processTables(lines, s, j, stb);
+				}
+				
                 // process blockquotes
                 if (s.size() >= 1 && s.get(0) == '>') {
                     s = processBlockQuotes(lines, s, j, sbq);
                 }
-
+				
                 if (s.get(0) == '-' || !suo.empty()) {
                     s = processLists(lines, s, j, suo, false);
                 }
@@ -139,6 +145,91 @@ public final class Convert {
 
         return converts;
     }
+	
+	
+	private static ArrayList<Character> processTables(ArrayList<ArrayList<Character>> lines, ArrayList<Character> s, int index, Stack<Integer> stb) {		
+		if (s.size() == 0) {
+			return s;
+		}
+		
+		if (s.get(0) != '|') {
+			return s;
+		}
+		
+		
+		
+		String result = "";
+		ArrayList<String> rows = new ArrayList<String>();
+		
+		String th_or_td = "<td>";
+		String th_or_td_close = "</td>";
+		
+		ArrayList<Character> prev = (index - 1 >= 0) ? lines.get(index-1) : new ArrayList<Character>();
+		ArrayList<Character> next = (index + 1 < lines.size()) ? lines.get(index+1) : new ArrayList<Character>();
+		
+		String entry = "";
+		for (int i = 1; i < s.size(); i++) {
+			if (s.get(i) == '|') {
+				rows.add(entry);
+				entry = "";
+				continue;
+			}
+			entry = entry + s.get(i);
+		}
+		
+		if (prev.size() == 0) {
+			th_or_td = "<th>";
+			th_or_td_close = "</th>";
+			result = result + "<table>";
+			
+			// CHECK VALIDITY OF HEADERS
+			if (next.size() == 0) {
+				return s;
+			}
+			int numRows = 0;
+			int dashCounts = 0;
+			for (int n = 1; n < next.size(); n++) {
+				if (next.get(n) == '|') {
+					if (dashCounts < 3) {
+						return s;
+					}
+					dashCounts = 0;
+					numRows++;
+					continue;
+				}
+				if (next.get(n) != '-') {
+					return s;
+				}
+				dashCounts++;
+			}
+			stb.push(1);
+			lines.remove(index+1);
+		}
+		
+		if (stb.empty()) {
+			return s;
+		}
+		
+		result = result + "<tr>";
+		
+		for (String row : rows) {
+			result = result + th_or_td + row + th_or_td_close;
+		}
+		
+		result = result + "</tr>";
+		
+		if (next.size() == 0) {
+			result = result + "</table>";
+			stb.pop();
+		}
+		
+		ArrayList<Character> out = new ArrayList<Character>();
+		char[] chrarr = result.toCharArray();
+		for (char c : chrarr) {
+			out.add(c);
+		}
+		return out;
+	}
 	
 	private static ArrayList<String> processParagraphs(ArrayList<String> strl) {
 		ArrayList<String> res = new ArrayList<String>(strl);
