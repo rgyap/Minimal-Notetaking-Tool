@@ -434,12 +434,15 @@ So-called "[reference-style links](https://www.markdownguide.org/basic-syntax/#r
 
 ### Wiki-style Links
 
-I also implemented Wiki-style links as a dedicated way to link to other **local HTML note files**.
+I also implemented Wiki-style links to allow notes to link to other Markdown notes within the notes directory.
 
 ```
-[[file_name.html|display text]]
+[[name_of_note.md|display text]]
 ```
-The converter will search for `file_name.html` in the directory that keeps all the *converted HTML* notes. If found, it will then put the absolute path of the file into the `href` attribute of the link tag (`<a>`). Right square brackets and underscores do not need to be preceeded by a backslash when inside a Wiki-style link. However, all right square brackets in the display text *must* be preceeded by a backslash.
+
+As such, the file `name_of_note` is expected to have `.md` as its file extension. The converter will then generate an HTML link containing a *relative path* to `name_of_note.html` (notice the change from `.md` to `.html`). This works because the file structure of the converted notes is identical to that of the original directory containing all the Markdown files in addition to how the converter preserves the original file name but the extension.
+
+Right square brackets and underscores *do not need* to be preceeded by a backslash when inside a Wiki-style link address. However, all right square brackets in the display text *must* be preceeded by a backslash.
 
 ## Images
 
@@ -451,16 +454,20 @@ The format for an image is as follows:
 ![Alt text for the image](link to the image)
 ```
 
-Just like with Markdown-style links, all right square brackets (`]`) inside the alt text must be preceeded by a backslash. Also like such links, in the link to the image, all underscores (`_`) must be preceeded by a backslash, and closing parentheses (`)`) must be replaced with `%29`.
+Just like with Markdown-style links, all right square brackets (`]`) inside the alt text must be preceeded by a backslash.
+
+Additionally, all underscores (`_`) must be preceeded by a backslash, and closing parentheses (`)`) must be replaced with `%29`.
 
 ### Wiki-style Images
 
-Wiki-style images are also implemented. However, they are exclusively for local images located inside the directory that keeps all the *unconverted Markdown-formatted* notes. The format is as follows:
+Wiki-style images are also implemented in order to accomodate exclusively for locally stored images inside the *folder containing the Markdown files*.
 
 ```
-![[file_name.png|image_size]]
+![[nice_image.png|image_size]]
 ```
-What the conversion program will do is find `file_name.png` in the aforementioned directory and then output its absolute path into the `src` attribute of the HTML image. Just like with Wiki-style links, all right square brackets (`]`) and underscores (`_`) do not need to be preceeded by a backslash in the file name.
+The path to the image present in the `src` attribute of the corresponding `img` tag will contain a *relative path* to the target image, which the program shall clone into the folder containing all the converted files.
+
+Just like with Wiki-style links, all right square brackets (`]`) and underscores (`_`) do not need to be preceeded by a backslash in the file name.
 
 The `image_size` is any number that represents the desired width of the image in pixels (while maintaining the original proportions of the image). Accordingly, my program expects a number. But, if a percent is included, it will instead be sized relative to the width of the `div` that contains it. Indeed, other units allowed in HTML/CSS are allowed to be placed inside the `image_size` text.
 
@@ -485,3 +492,44 @@ If a backslash precedes a character, the program would ensure that it remains in
 ## HTML
 
 HTML is fully supported as this program essentially just copies text from a Markdown document and outputs it into an HTML document.
+
+## MathJax
+
+The use of MathJax to display equations typed in $\LaTeX$ is fully supported. So, beautiful math equations like $e^{\pi i} + 1 = 0$ can be included in these notes and will be rendered nicely. To create an in-line expression, put a dollar sign `$` at the start and end of the expression. For example,
+```
+The golden ratio is explicitly given by $\varphi = \frac{1+\sqrt{5}}{2}$.
+```
+> The golden ratio is explicitly given by $\varphi = \frac{1+\sqrt{5}}{2}$.
+
+Then, to create a math expression for display, use double dollar signs `$$` instead of single ones. For example
+
+```
+It is therefore evident that
+$$1 = \begin{cases}
+2 &\text{if $2=1$,}\\
+1 &\text{if you're not an idiot.}
+\end{cases}$$
+```
+
+Gives (using a block quote for better visibility):
+
+> It is therefore evident that
+> $$1 = \begin{cases} 2 &\text{if $2=1$,}\\1 &\text{if you're not an idiot.}\end{cases}$$
+
+In fact, to use a display math within a block quote, just type the equation within a single line.
+
+```
+> It is therefore evident that
+> $$1 = \begin{cases} 2 &\text{if $2=1$,}\\1 &\text{if you're not an idiot.}\end{cases}$$
+```
+
+However, note that an escaped dollar symbol `\$` cannot be used inside any quation. If you really want to have a dollar symbol in a MathJax expression, please type `\char"0024` instead. For example,
+
+```
+Hence, $\char"0024 1 + \char"0024 2 = \char"0024 3$.
+```
+
+will display the equation `$1 + $2 = $3`:
+
+> Hence, $\char"0024 1 + \char"0024 2 = \char"0024 3$.
+

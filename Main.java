@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.DirectoryStream;
 import java.util.List;
 import java.util.ArrayList;
+import java.nio.file.StandardCopyOption;
 
 public class Main {
 
@@ -31,7 +32,8 @@ public class Main {
                     String originalName = sourcePath.getFileName().toString();
 
                     if (!(originalName.substring(originalName.length()-2).equals("md"))) {
-                        return;
+						Files.copy(sourcePath, targetDir.resolve(originalName), StandardCopyOption.REPLACE_EXISTING);
+						return;
                     }
 
                     String newName = originalName.substring(0, originalName.length() - 3) + ".html";
@@ -43,7 +45,7 @@ public class Main {
 					Write.writeToHTML(sourcePath, targetPath);
 					long endTime = System.nanoTime();
 					double duration = (endTime - startTime) / 1000000d;
-					System.out.print("Done. (Time taken: "+duration+" millisecond(s))\n");
+					System.out.print("DONE! (Time taken: "+duration+" millisecond(s))\n");
                 }
 
             } catch (IOException e) {

@@ -14,21 +14,32 @@ public final class Write {
 		String fileName = path.toString();
 
 		ArrayList<ArrayList<Character>> flines = Read.readFileLines(fileName);
-        ArrayList<String> converts = Convert.conv(flines);
+        ArrayList<String> converts = Convert.conv(flines, path.toAbsolutePath());
+		
+		ArrayList<String> styles = Find.getStyleFiles("./template");
+		
 		String insertContent = stringWithLines(converts);
 
         StringBuilder result = new StringBuilder();
+		
 
         for (String line : lines) {
             if (line.equals("68747470733A2F2F7777772E796F75747562652E636F6D2F77617463683F763D6451773477395767586351")) {
                 result.append(insertContent).append("\n");
-            } else {
+            } else if (line.equals("5354594C4553")) {
+				for (int i = 0; i < styles.size(); i++) {
+					String stylelink = "<link rel='stylesheet' href='" + styles.get(i) + "'>";
+					result.append(stylelink).append("\n");
+				}
+			} else {
                 result.append(line).append("\n");
             }
         }
         Files.writeString(targetPath, result.toString());
         
     }
+	
+
 	
 	public static String stringWithLines(ArrayList<String> s) {
 		String res = "";
@@ -37,4 +48,5 @@ public final class Write {
 		}
 		return res; 
 	}
+	
 }

@@ -10,7 +10,7 @@ SAD VIOLIN
 # More Sad
 
 Another test
-[[TEST1.html|File: TEST1.md]]
+[[testtext|File: TEST1.md]]
 ![[oh_god_why.jpg|50]]
 
 ---
@@ -22,4 +22,4 @@ Another test
 
 [![[oh\_god\_why.jpg|50\]\]](https://en.wikipedia.org/wiki/Sadness#Coping\_mechanisms)  
 
-[[TEST2.html|![[oh_god_why.jpg|100\]\]]]
+[[TEST2|![[oh_god_why.jpg|100\]\]]]

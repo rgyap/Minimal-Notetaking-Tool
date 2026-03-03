@@ -5,6 +5,9 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Map;
 
+import java.nio.file.Path;
+import java.nio.file.Paths; // FOR INTERNAL LINKS
+
 public final class Convert {
 
     private Convert() {
@@ -36,13 +39,15 @@ public final class Convert {
 		Map.entry("$$", new String[]{"$$", "$$"})
     ));
 	
-    public static ArrayList<String> conv(ArrayList<ArrayList<Character>> lines) {
+    public static ArrayList<String> conv(ArrayList<ArrayList<Character>> lines, Path currPath) {
+		// A path is made into an argument so that I can deal with internal links.
+		
         ArrayList<String> converts = new ArrayList<String>();
 		
-		Stack<String> sst = new Stack<String>();
-		Stack<Integer> sbq = new Stack<>(); // FOR BLOCK QUOTE PROCESSING
-	    Stack<Integer> suo = new Stack<>(); // FOR UNORDERED LISTS
-	    Stack<Integer> sor = new Stack<>(); // FOR ORDERED LISTS
+		Stack<String> sst = new Stack<String>(); // FOR TEXT FORMATTING
+		Stack<Integer> sbq = new Stack<Integer>(); // FOR BLOCK QUOTE PROCESSING
+	    Stack<Integer> suo = new Stack<Integer>(); // FOR UNORDERED LISTS
+	    Stack<Integer> sor = new Stack<Integer>(); // FOR ORDERED LISTS
 		
         for (int j = 0; j < lines.size(); j++) {
             ArrayList<Character> s = new ArrayList<>(lines.get(j)); 
@@ -86,10 +91,10 @@ public final class Convert {
                 
                 // links
                 s = processLinks(s);
-                s = processLinks2(s);
+                s = processLinks2(s, currPath);
 				
 				s = processImages(s); 
-                s = processImages2(s); 
+                s = processImages2(s, currPath); 
         
                 // process blockquotes
                 if (s.size() >= 1 && s.get(0) == '>') {
@@ -310,9 +315,10 @@ public final class Convert {
 				arr.add(String.valueOf(next.get(i)));
 			}
 			arr.add("</p>");
-			if (nnl) {
-				lines.remove(index+1);
-			} // linear-time operation, but this is to address the case where there is text added below the last item of a list.
+			
+			if (!nnl) {
+				lines.remove(index+1); // linear-time operation, but this is to address the case where there is text added below the last item of a list.
+			} 
 		}
 		
 		if (cl && (!nl || nextCount <= currCount)) {
@@ -700,7 +706,7 @@ public final class Convert {
         return out;
     }
 
-    private static ArrayList<Character> processImages2(ArrayList<Character> in) {
+    private static ArrayList<Character> processImages2(ArrayList<Character> in, Path currPath) {
 		ArrayList<Character> arr = new ArrayList<Character>(in);
         ArrayList<Character> result = new ArrayList<Character>();
 		
@@ -710,7 +716,7 @@ public final class Convert {
 		
 		for (int i = 0; i < arr.size(); i++) {
             if (i > 0 && i+1 < arr.size() && arr.get(i) == '[' && arr.get(i+1) == '[' && arr.get(i-1) == '!' && arr.get(Math.max(i-2,0)) != '\\') {
-                String imageName = "";
+                String imageName = ""; 
                 String imageSize = "";
                 int j = i + 2;
                 
@@ -745,9 +751,16 @@ public final class Convert {
                 }
                 
                 result.remove(i-1);
- 
-				String url = Find.find("./notes", imageName);
 				
+				// Exploit how the file structure of the directory 
+				// of converted notes is identical to that of the unconverted notes
+				Path target = Find.find("./notes", imageName); 
+				String url = "";
+				if (target != null) {
+					Path relative = (currPath.getParent()).relativize(target);
+					url = relative.toString();
+				}
+
 				char[] curl = url.toCharArray();
                 String newUrl = "";
                 for (char c : curl) {
@@ -772,70 +785,8 @@ public final class Convert {
 
 	}	
 	
-	private static ArrayList<Character> processImages22(ArrayList<Character> in) {
-		ArrayList<Character> arr = new ArrayList<Character>(in);
-        ArrayList<Character> result = new ArrayList<Character>();
-		
-		if (in.size() < 6) {
-			return in;
-		}
-		
-		for (int i = 0; i < arr.size(); i++) {
-            if (i > 0 && i+1 < arr.size() && arr.get(i) == '[' && arr.get(i+1) == '[' && arr.get(i-1) == '!' && arr.get(Math.max(i-2,0)) != '\\') {
-                String imageName = "";
-                String imageSize = "";
-                int j = i + 2;
-                
-                while (j < arr.size() && (arr.get(j) != '|')) {
-                    imageName = imageName + arr.get(j);
-                    j++;
-                }
-
-                if (j >= arr.size()) {
-                    result.add(arr.get(i));
-                    continue;
-                }
-                
-                j++;
-
-                while (j < arr.size() && arr.get(j) != ']') {
-                    imageSize = imageSize + arr.get(j);
-                    j++;
-                }
-				
-				j++;
-                
-                
-                if (j >= arr.size()) {
-                    result.add(arr.get(i));
-                    continue;
-                }
-				
-				if (arr.get(j) != ']') {
-                    result.add(arr.get(i));
-                    continue;
-                }
-                
-                result.remove(i-1);
- 
-				String url = Find.find("./notes", imageName);
-                
-                String str = "<img src='"+url+"' width='"+imageSize+"'>";
-                
-                char[] imgt = str.toCharArray();
-                for (char c : imgt) {
-                    result.add(c);
-                }
-                i = j;
-                continue;
-            }
-            result.add(arr.get(i));
-        }
-        return result;
-
-	}	
 	
-	private static ArrayList<Character> processLinks2(ArrayList<Character> in) {
+	private static ArrayList<Character> processLinks2(ArrayList<Character> in, Path currPath) {
 		ArrayList<Character> arr = new ArrayList<Character>(in);
         ArrayList<Character> result = new ArrayList<Character>();
 		
@@ -845,7 +796,7 @@ public final class Convert {
 		
 		for (int i = 0; i < arr.size(); i++) {
             if (i+1 < arr.size() && arr.get(i) == '[' && arr.get(i+1) == '[' && arr.get(Math.max(i-1,0)) != '\\' && arr.get(Math.max(i-1,0)) != '!' ) {
-                String fileName = "";
+                String fileName = ""; 
                 String displayText = "";
                 int j = i + 2;
                 
@@ -877,9 +828,15 @@ public final class Convert {
                     continue;
                 }
 				
-				String url = Find.find("./mainnotes", fileName);
+				// This is slow, but I NEED IT
+				Path target = Find.find("./notes", fileName);
+				String url22 = "";
+				if (target != null) {
+					Path relative = (currPath.getParent()).relativize(target);
+					url22 = relative.toString();
+				}
 				
-				char[] curl = url.toCharArray();
+				char[] curl = url22.toCharArray();
                 String newUrl = "";
                 for (char c : curl) {
                     if (c == '\\' || c == '_') {
@@ -887,9 +844,8 @@ public final class Convert {
                     }
                     newUrl = newUrl + c;
                 }
-				
                 
-				String str = "<a href='"+newUrl+"'>"+displayText+"</a>";
+				String str = "<a href='"+newUrl.replace(".md", ".html")+"'>"+displayText+"</a>";
                 
                 char[] imgt = str.toCharArray();
                 for (char c : imgt) {
@@ -1010,109 +966,4 @@ public final class Convert {
 		return out;
 	}
 	
-	/*
-	private static ArrayList<Character> lineFormatting(ArrayList<Character> s1, Stack<Integer> st) {
-        ArrayList<Character> s = new ArrayList<>(s1);
-        
-        String res = "";
-        
-        // padding to not make Java angry with out-of-bounds exceptions
-        s.add((char)0);
-        s.add((char)0);
-        s.add((char)0);
-		
-
-        for (int i = 0; i < s.size()-3; i++) {
-			
-			boolean noMath = !st.contains(9) && !st.contains(10);
-			boolean noCode = !st.contains(7) && !st.contains(8);
-			boolean noCodeNorMath = noMath && noCode;
-
-            // Escape
-            if (s.get(i) == '\\' && noCodeNorMath) {
-                res = res + s.get(i+1);
-                i++;
-                continue;
-            } 
-
-            // Bold and Italics
-            if ((s.get(i) == '*' || s.get(i) == '_') && noCodeNorMath) {
-                char emph = s.get(i);
-                int ac = 0;
-
-                while (ac < 3 && s.get(i+ac) == emph) {
-                    ac++;
-                }
-                
-                i += ac - 1;
-                
-				if (emph == '_') {
-					ac += 3;
-				}
-                
-                if (st.contains(ac)) {
-                    st.pop();
-                    res = res + formatters[ac][1];
-                } else {
-                    st.push(ac);
-                    res = res + formatters[ac][0];
-                
-                }
-                continue; 
-            }
-
-            // Code Blocks
-            if (s.get(i) == '`' && noMath) {
-                int m = 0;
-                if ((s.get(i+1) == '`') && (s.get(i+2) == '`')) {
-                    m = 1;
-                }
-                i = i + m + m; 
-                int k = 7 + m;
-				 
-				if ((k == 7 && !st.contains(8)) || k == 8) {
-					if (st.contains(k)) {
-						st.pop();
-						res = res + formatters[k][1];
-					} else {
-						st.push(k);
-						res = res + formatters[k][0];
-					}
-					continue;
-				}
-            }
-
-            // MathJax 
-            if (s.get(i) == '$' && noCode) {
-                int dc = 0; 
-                if (s.get(i+1) == '$') {
-                    dc++;
-                }
-                
-                i += dc;
-                int k = 9 + dc;
-                if (st.contains(k)) {
-                    st.pop();
-                    res = res + formatters[k][1];
-                } else {
-                    st.push(k);
-                    res = res + formatters[k][0];
-                }
-                continue;
-            } 
-			
-			if (!noCode && s.get(i) == '<') {
-				res = res + "&lt;";
-				continue;
-			}
-			
-			res = res + s.get(i);
-        } 
-        ArrayList<Character> out = new ArrayList<Character>();
-        for (char c : res.toCharArray()) {
-            out.add(c);
-        }
-
-        return out;
-    }*/
 }
