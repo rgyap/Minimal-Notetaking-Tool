@@ -111,6 +111,7 @@ public final class Convert {
                     s = processLists(lines, s, j, suo, false);
                 }
                 // ORDERED LISTS MUST START WITH "1."
+				
                 if ((1 < s.size() && Character.isDigit(s.get(0)) && s.get(1) == '.') || !sor.empty()) { 
                     s = processLists(lines, s, j, sor, true);
                 }
@@ -388,7 +389,7 @@ public final class Convert {
 			
 		for (int i = IND*currCount+1; i < s.size(); i++) {
 			if (ordered) {
-				if (s.get(i) == '.') {
+				if (s.get(i) == '.' && !outContentForOrderedLists) {
 					outContentForOrderedLists = true;
 					continue;
 				}
@@ -624,22 +625,7 @@ public final class Convert {
                     result.add(arr.get(i));
                     continue;
                 }
-				/*
-                char[] curl = url.toCharArray();
-                String newUrl = "";
-                for (char c : curl) {
-                    newUrl = newUrl + c;
-                }*/
-                /*
-                char[] dtxt = linkText.toCharArray();
-                String displayText = "";
-                for (char c : dtxt) {
-                    if (c == '\\') {
-                        displayText = displayText + '\\';
-                    }
-                    displayText = displayText + c;
-                }*/
-                 
+                
                 String str = "<a href='"+url+"'>"+linkText+"</a>";
                  
                 char[] link = str.toCharArray();
@@ -809,37 +795,45 @@ public final class Convert {
             if (i > 0 && i+1 < arr.size() && arr.get(i) == '[' && arr.get(i+1) == '[' && arr.get(i-1) == '!' && arr.get(Math.max(i-2,0)) != '\\') {
                 String imageName = ""; 
                 String imageSize = "";
+				boolean hasPipe = true;
                 int j = i + 2;
                 
                 while (j < arr.size() && (arr.get(j) != '|')) {
+					if (arr.get(j) == ']' && j+1 < arr.size() && arr.get(j+1) == ']') { // PLEASE DO NOT PUT ']]' IN FILE NAMES THEN!
+						hasPipe = false;
+						j++;
+						break;
+					} 
                     imageName = imageName + arr.get(j);
                     j++;
                 }
-
-                if (j >= arr.size()) {
-                    result.add(arr.get(i));
-                    continue;
-                }
-                
-                j++;
-
-                while (j < arr.size() && arr.get(j) != ']') {
-                    imageSize = imageSize + arr.get(j);
-                    j++;
-                }
 				
-				j++;
-                
-                
-                if (j >= arr.size()) {
-                    result.add(arr.get(i));
-                    continue;
-                }
-				
-				if (arr.get(j) != ']') {
-                    result.add(arr.get(i));
-                    continue;
-                }
+				if (hasPipe) {
+					if (j >= arr.size()) {
+						result.add(arr.get(i));
+						continue;
+					}
+					
+					j++;
+
+					while (j < arr.size() && arr.get(j) != ']') {
+						imageSize = imageSize + arr.get(j);
+						j++;
+					}
+					
+					j++;
+					
+					
+					if (j >= arr.size()) {
+						result.add(arr.get(i));
+						continue;
+					}
+					
+					if (arr.get(j) != ']') {
+						result.add(arr.get(i));
+						continue;
+					}
+				}
                 
                 result.remove(i-1);
 				
@@ -861,7 +855,12 @@ public final class Convert {
                     newUrl = newUrl + c;
                 }
                 
-                String str = "<img src='"+newUrl+"' width='"+imageSize+"'>";
+				String widthAttribute = "";
+				if (hasPipe) {
+					widthAttribute = " width='" + imageSize + "'";
+				}
+				
+                String str = "<img src='"+newUrl+"'" + widthAttribute + ">";
                 
                 char[] imgt = str.toCharArray();
                 for (char c : imgt) {
@@ -889,38 +888,56 @@ public final class Convert {
             if (i+1 < arr.size() && arr.get(i) == '[' && arr.get(i+1) == '[' && arr.get(Math.max(i-1,0)) != '\\' && arr.get(Math.max(i-1,0)) != '!' ) {
                 String fileName = ""; 
                 String displayText = "";
-                int j = i + 2;
-                
-                while (j < arr.size() && (arr.get(j) != '|')) {
-                    fileName = fileName + arr.get(j);
-                    j++;
-                }
-
-                if (j >= arr.size()) {
-                    result.add(arr.get(i));
-                    continue;
-                }
-                
-                j++;
-
-                while (j < arr.size() && (arr.get(j) != ']' || arr.get(j-1) == '\\')) {
-                    if (arr.get(j) == '\\') {
-                        j++;
-                    }
-                    displayText = displayText + arr.get(j);
-                    j++;
-                }
+				String section = "";
+                boolean hasPipe = true;
+				boolean addToSection = false;
 				
-				j++;
-                
-                
-                if (j >= arr.size()) {
-                    result.add(arr.get(i));
-                    continue;
+				int j = i + 2;
+				
+                while (j < arr.size() && (arr.get(j) != '|')) {
+					if (arr.get(j) == ']' && j+1 < arr.size() && arr.get(j+1) == ']') { // PLEASE DO NOT PUT ']]' IN FILE NAMES THEN!
+						displayText = fileName;
+						hasPipe = false;
+						j++;
+						break;
+					} 
+					if (arr.get(j) == '#') {
+						addToSection = true;
+					}
+					if (addToSection) {
+						section = section + arr.get(j);
+					} else {
+						fileName = fileName + arr.get(j);
+					}
+                    j++;
                 }
+ 
+				if (hasPipe) {
+					if (j >= arr.size()) {
+						result.add(arr.get(i));
+						continue;
+					}
+					j++;
+					
+					while (j < arr.size() && (arr.get(j) != ']' || arr.get(j-1) == '\\')) {
+						if (arr.get(j) == '\\') {
+							j++;
+						}
+
+						displayText = displayText + arr.get(j);
+						j++;
+					}
+					
+					j++;
+					
+					if (j >= arr.size()) {
+						result.add(arr.get(i));
+						continue;
+					}
+				}
 				
 				// This is slow, but I NEED IT
-				Path target = Find.find("./notes", fileName);
+				Path target = Find.find("./notes", fileName + ".md");
 				String url22 = "";
 				if (target != null) {
 					Path relative = (currPath.getParent()).relativize(target);
@@ -935,9 +952,10 @@ public final class Convert {
                     }
                     newUrl = newUrl + c;
                 }
-                
-				String str = "<a href='"+newUrl.replace(".md", ".html")+"'>"+displayText+"</a>";
-                
+				
+
+				String str = "<a href='"+newUrl.replace(".md", ".html")+section+"'>"+displayText+"</a>";
+				
                 char[] imgt = str.toCharArray();
                 for (char c : imgt) {
                     result.add(c);
@@ -946,12 +964,11 @@ public final class Convert {
                 continue;
             }
             result.add(arr.get(i));
+			
         }
         return result;
 
 	}	
-	
-	
 	
 	private static ArrayList<Character> lineFormatting(ArrayList<Character> s1, Stack<String> sst) {
 		ArrayList<Character> s = new ArrayList<>(s1);
@@ -963,7 +980,6 @@ public final class Convert {
 		s.add((char)0);
 		s.add((char)0);
 		
-
 		for (int i = 0; i < s.size()-3; i++) {
 			boolean noMath = !sst.contains("$") && !sst.contains("$$");
 			boolean noCode = !sst.contains("`") && !sst.contains("```");

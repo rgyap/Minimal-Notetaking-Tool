@@ -437,10 +437,16 @@ So-called "[reference-style links](https://www.markdownguide.org/basic-syntax/#r
 I also implemented Wiki-style links to allow notes to link to other Markdown notes within the notes directory.
 
 ```
-[[name_of_note.md|display text]]
+[[name_of_note|display text]]
 ```
 
-As such, the file `name_of_note` is expected to have `.md` as its file extension. The converter will then generate an HTML link containing a *relative path* to `name_of_note.html` (notice the change from `.md` to `.html`). This works because the file structure of the converted notes is identical to that of the original directory containing all the Markdown files in addition to how the converter preserves the original file name but the extension.
+As such, the file `name_of_note` is implied and is expected to have `.md` as its file extension. As such, `name_of_note` *does not need* to be followed by `.md`—just put the file name.
+
+It is also possible to include a certain section in the linked file. For example,
+
+
+
+The converter will then generate an HTML link containing a *relative path* to `name_of_note.html` (notice the change from `.md` to `.html`). This works because the file structure of the converted notes is identical to that of the original directory containing all the Markdown files in addition to how the converter preserves the original file name but the extension.
 
 Right square brackets and underscores *do not need* to be preceeded by a backslash when inside a Wiki-style link address. However, all right square brackets in the display text *must* be preceeded by a backslash.
 
