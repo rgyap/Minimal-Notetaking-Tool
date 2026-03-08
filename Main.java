@@ -11,7 +11,36 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
-        Path sourceRoot = Paths.get("notes");
+        convertAll(Paths.get("notes"));
+         
+    }
+
+    private static void deleteRecursively(Path path) throws IOException {
+        if (Files.isDirectory(path)) {
+            try (DirectoryStream<Path> entries = Files.newDirectoryStream(path)) {
+                for (Path entry : entries) {
+                    deleteRecursively(entry);
+                }
+            }
+        }
+        Files.delete(path);
+    }
+
+    
+    private static void deleteContents(Path folder) throws IOException {
+        if (!Files.isDirectory(folder)) {
+            return;
+        }
+
+        try (DirectoryStream<Path> entries = Files.newDirectoryStream(folder)) {
+            for (Path entry : entries) {
+                deleteRecursively(entry);
+            }
+        }
+    }
+	
+	private static void convertAll(Path sourceRoot) throws IOException {
+		//Path sourceRoot = Paths.get("notes");
         Path targetRoot = Paths.get("mainnotes"); 
 		
         if (Files.exists(targetRoot)) {
@@ -40,44 +69,17 @@ public class Main {
 
                     Path targetPath = targetDir.resolve(newName);
 
-                    System.out.print("Processing " + sourcePath.toString() + "... ");
+                    System.out.print("Processing \"" + sourcePath.toString() + "\"... ");
 					long startTime = System.nanoTime();
 					Write.writeToHTML(sourcePath, targetPath);
 					long endTime = System.nanoTime();
 					double duration = (endTime - startTime) / 1000000d;
-					System.out.print("DONE! (Time taken: "+duration+" millisecond(s))\n");
+					System.out.print("DONE! (Time: "+duration+" ms)\n");
                 }
-
             } catch (IOException e) {
 				System.out.println("Uh oh!");
                 e.printStackTrace();
             }
         });
-         
-    }
-
-    private static void deleteRecursively(Path path) throws IOException {
-        if (Files.isDirectory(path)) {
-            try (DirectoryStream<Path> entries = Files.newDirectoryStream(path)) {
-                for (Path entry : entries) {
-                    deleteRecursively(entry);
-                }
-            }
-        }
-        Files.delete(path);
-    }
-
-    
-    private static void deleteContents(Path folder) throws IOException {
-        if (!Files.isDirectory(folder)) {
-            return;
-        }
-
-        try (DirectoryStream<Path> entries = Files.newDirectoryStream(folder)) {
-            for (Path entry : entries) {
-                deleteRecursively(entry);
-            }
-        }
-    }
-
+	}
 }
