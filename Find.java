@@ -7,6 +7,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class Find {
+	
+	private Find() {
+		
+	}
     
     public static Path findFile(Path dir, String fileName)  {
 		// RETURNS ABSOLUTE PATHS OR NULL IF NOT FOUND
@@ -52,4 +56,29 @@ public class Find {
 
         return result;
     }
+	
+	public static int[] findStringInFile(Path thing, String query, boolean sensitive) {
+		// returns a pair [a,b] where a is the line and b is the column
+		// returns null if not found
+		if (Files.isDirectory(thing)) {
+			return null;
+		}
+		
+		ArrayList<String> thingg = Read.readFileLinesStrings(thing.toString());
+
+		for (int i = 0; i < thingg.size(); i++) {
+			String line = thingg.get(i);
+			int col;
+			if (!sensitive) {
+				col = (line.toLowerCase()).indexOf(query.toLowerCase());
+			} else {
+				col = line.indexOf(query);
+			}
+			if (col >= 0) {
+				int[] out = {i+1, col+1};
+				return out;
+			}
+		}
+		return null;
+	}
 }

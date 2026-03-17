@@ -25,6 +25,7 @@ public final class Convert {
     private static HashSet<String> blacklistedTags = new HashSet<String>(Arrays.asList(tags));
     private static HashSet<String> blacklistedTagsClose = new HashSet<String>(Arrays.asList(tagsClose));
     
+	private static ArrayList<String> alignments = new ArrayList<String>(); // TABLE ALIGNMENTS
     
     public static final HashMap<String, String[]> forms = new HashMap<String, String[]>(Map.ofEntries(
         Map.entry("*", new String[]{"<i>", "</i>"}),
@@ -144,13 +145,12 @@ public final class Convert {
 
         return converts;
     }
-    
-	private static ArrayList<String> alignments = new ArrayList<String>();
 	
     private static ArrayList<Character> processTables(ArrayList<ArrayList<Character>> lines, ArrayList<Character> s, int index, Stack<Integer> stb) {
 		if (stb.empty()) {
 			alignments = new ArrayList<String>();
 		}
+		
         if (s.size() == 0) {
             return s;
         }
@@ -317,14 +317,11 @@ public final class Convert {
             boolean active2 = active || lastStart.equals("<blockquote>");
             
             if (next.length() != 0 && startsWithWhatTag(next).length() == 0 && active2) {
-                //if (active || lastStart.equals("<blockquote>")) {
                 curr = curr + "<br>";
-                //}
             } else if (active) {
                 curr = curr + "</p>";
             }
-            
-            //if (active || lastStart.equals("<blockquote>")) {
+
             if (active2) {
                 res.set(j, curr);
             }
@@ -667,7 +664,7 @@ public final class Convert {
                     continue;
                 }
                 
-                String str = "<a href='"+url+"'>"+linkText+"</a>";
+                String str = "<a href=\""+url+"\">"+linkText+"</a>";
                  
                 char[] link = str.toCharArray();
                 for (char c : link) {
@@ -740,7 +737,7 @@ public final class Convert {
                     newUrl = newUrl + c;
                 }
                  
-                String str = "<img src='"+newUrl+"' alt='"+linkText+"'>";
+                String str = "<img src=\""+newUrl+"\" alt='"+linkText+"'>";
                 
                 char[] link = str.toCharArray();
                 for (char c : link) {
@@ -845,6 +842,9 @@ public final class Convert {
                         j++;
                         break;
                     } 
+					if (arr.get(j) == '\\') { // Just in case escaping might be inevitable.
+						j++;
+					}
                     imageName = imageName + arr.get(j);
                     j++;
                 }
@@ -995,7 +995,7 @@ public final class Convert {
                 }
                 
 
-                String str = "<a href='"+newUrl.replace(".md", ".html")+section+"'>"+displayText+"</a>";
+                String str = "<a href=\""+newUrl.replace(".md", ".html")+section+"\">"+displayText+"</a>";
                 
                 char[] imgt = str.toCharArray();
                 for (char c : imgt) {
