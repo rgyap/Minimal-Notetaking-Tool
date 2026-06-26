@@ -1,3 +1,5 @@
+package src.core;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -9,10 +11,21 @@ import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Collections;
 
-public class NoteOperations {
 
-	public static void searchAll(Path sourceRoot, String query, boolean sensitive) throws IOException {
-		ArrayList<String> names = new ArrayList<String>();
+public class NoteManager {
+    
+    private final Path noteDir;
+    private final Path outDir;
+
+    public NoteManager(Path noteDir, Path outDir) {
+        this.noteDir = noteDir;
+        this.outDir = outDir;
+    }
+
+    public void searchAll(String query, boolean sensitive) throws IOException {
+		Path sourceRoot = this.noteDir;
+
+        ArrayList<String> names = new ArrayList<String>();
 		HashMap<String, int[]> locations = new HashMap<String, int[]>();
 		
 		Files.walk(sourceRoot).forEach(sourcePath -> {
@@ -46,11 +59,12 @@ public class NoteOperations {
 			System.out.println("- \"" + name + "\" (First occurence: Line " + coords[0] + ", Column " + coords[1] + ")");
 		}
 	}
-	
-	public static void merge(String first, String second) throws IOException {
-		Path firstp = Find.find("./notes", first);
-		Path secondp = Find.find("./notes", second);
-		
+
+    public void merge(String first, String second) throws IOException {
+		// Path firstp = Find.find("./notes", first);
+		// Path secondp = Find.find("./notes", second);
+        Path firstp = Find.find(this.noteDir.toString(), first);
+        Path secondp = Find.find(this.noteDir.toString(), second);
 		
 		String extension1 = getFileExtension(first);
 		String extension2 = getFileExtension(second);
@@ -61,14 +75,16 @@ public class NoteOperations {
 		}
 		
 		String[] resultname = merge(firstp, secondp);
-		
+	    	
 		System.out.print("Successfully merged \"" + firstp.getFileName().toString() + "\" and \"" +secondp.getFileName().toString() + "\" ");
 		System.out.print("into \"" + resultname[0] + "\".\nOutput location: \"" + resultname[1] + "\".\n");
 	}
-	
-	public static void convertAll(Path sourceRoot) throws IOException {
-        Path targetRoot = Paths.get("mainnotes"); 
-		
+
+    public void convertAll() throws IOException {
+        // Path targetRoot = Paths.get("mainnotes");
+        Path sourceRoot = this.noteDir; 
+		Path targetRoot = this.outDir;
+                
         if (Files.exists(targetRoot)) {
             deleteContents(targetRoot);
         }
@@ -115,7 +131,7 @@ public class NoteOperations {
 		HELPER FUNCTIONS
 	*/
 	
-	private static String[] merge(Path first, Path second) throws IOException {
+	private String[] merge(Path first, Path second) throws IOException {
 		if (Files.isDirectory(first) || Files.isDirectory(second)) {
 			return null;
 		}
@@ -144,7 +160,7 @@ public class NoteOperations {
 		return out;
 	}
 	
-	private static String getFileExtension(String fileName) {
+	private String getFileExtension(String fileName) {
 		int lastIndexOfDot = fileName.lastIndexOf('.');
 		if (lastIndexOfDot == -1) {
 			return ""; // No extension found
@@ -155,7 +171,7 @@ public class NoteOperations {
 		return fileName.substring(lastIndexOfDot + 1);
 	}
 	
-	private static void deleteRecursively(Path path) throws IOException {
+	private void deleteRecursively(Path path) throws IOException {
         if (Files.isDirectory(path)) {
             try (DirectoryStream<Path> entries = Files.newDirectoryStream(path)) {
                 for (Path entry : entries) {
@@ -167,7 +183,7 @@ public class NoteOperations {
     }
 
     
-    private static void deleteContents(Path folder) throws IOException {
+    private void deleteContents(Path folder) throws IOException {
         if (!Files.isDirectory(folder)) {
             return;
         }
@@ -178,4 +194,5 @@ public class NoteOperations {
             }
         }
     }
+
 }

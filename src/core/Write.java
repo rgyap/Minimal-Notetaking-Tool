@@ -1,3 +1,5 @@
+package src.core;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -9,14 +11,14 @@ public final class Write {
     }
 
     public static void writeToHTML(Path path, Path targetPath) throws IOException {
-        List<String> lines = Files.readAllLines(Path.of("./template/note_template.html"));
+        List<String> lines = Files.readAllLines(Path.of("src/core/template/note_template.html"));
 		
 		String fileName = path.toString();
 
 		ArrayList<ArrayList<Character>> flines = Read.readFileLines(fileName);
         ArrayList<String> converts = Convert.conv(flines, path.toAbsolutePath());
 		
-		ArrayList<String> styles = Find.getStyleFiles("./template");
+		ArrayList<String> styles = Find.getStyleFiles("src/core/template");
 		
 		String insertContent = stringWithLines(converts);
 
