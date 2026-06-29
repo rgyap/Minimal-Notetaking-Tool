@@ -42,7 +42,7 @@ public final class Convert {
         Map.entry("$$", new String[]{"$$", "$$"})
     ));
     
-    public static ArrayList<String> conv(ArrayList<ArrayList<Character>> lines, Path currPath) {
+    public static ArrayList<String> conv(ArrayList<ArrayList<Character>> lines, Path currPath, Path root) {
         // A path is made into an argument so that I can deal with internal links.
         
         ArrayList<String> converts = new ArrayList<String>();
@@ -95,10 +95,11 @@ public final class Convert {
                 
                 // links
                 s = processLinks(s);
-                s = processLinks2(s, currPath);
+                s = processLinks2(s, currPath, root);
                 
+				// images
                 s = processImages(s); 
-                s = processImages2(s, currPath); 
+                s = processImages2(s, currPath, root); 
         
         
                 if (s.get(0) == '|') {
@@ -724,8 +725,6 @@ public final class Convert {
                     j++;
                 }
                 
-                 
-                
                 if (j >= arr.size()) {
                     result.add(arr.get(i));
                     continue;
@@ -823,7 +822,7 @@ public final class Convert {
         return out;
     }
 
-    private static ArrayList<Character> processImages2(ArrayList<Character> in, Path currPath) {
+    private static ArrayList<Character> processImages2(ArrayList<Character> in, Path currPath, Path root) {
         ArrayList<Character> arr = new ArrayList<Character>(in);
         ArrayList<Character> result = new ArrayList<Character>();
         
@@ -882,7 +881,8 @@ public final class Convert {
                 
                 // Exploit how the file structure of the directory 
                 // of converted notes is identical to that of the unconverted notes
-                Path target = Find.find("./notes", imageName); 
+				Path target = Find.findFile(root, imageName);
+				
                 String url = "";
                 if (target != null) {
                     Path relative = (currPath.getParent()).relativize(target);
@@ -919,7 +919,7 @@ public final class Convert {
     }   
     
     
-    private static ArrayList<Character> processLinks2(ArrayList<Character> in, Path currPath) {
+    private static ArrayList<Character> processLinks2(ArrayList<Character> in, Path currPath, Path root) {
         ArrayList<Character> arr = new ArrayList<Character>(in);
         ArrayList<Character> result = new ArrayList<Character>();
         
@@ -978,9 +978,9 @@ public final class Convert {
                         continue;
                     }
                 }
-                
-                // This is slow, but I NEED IT
-                Path target = Find.find("./notes", fileName + ".md");
+				
+				Path target = Find.findFile(root, fileName + ".md"); 
+				
                 String url22 = "";
                 if (target != null) {
                     Path relative = (currPath.getParent()).relativize(target);

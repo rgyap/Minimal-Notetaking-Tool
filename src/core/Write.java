@@ -10,15 +10,16 @@ public final class Write {
     private Write() {
     }
 
-    public static void writeToHTML(Path path, Path targetPath) throws IOException {
+    public static void writeToHTML(Path path, Path targetPath, Path root) throws IOException {
         List<String> lines = Files.readAllLines(Path.of("src/core/template/note_template.html"));
 		
 		String fileName = path.toString();
 
 		ArrayList<ArrayList<Character>> flines = Read.readFileLines(fileName);
-        ArrayList<String> converts = Convert.conv(flines, path.toAbsolutePath());
+        ArrayList<String> converts = Convert.conv(flines, path.toAbsolutePath(), root);
 		
-		ArrayList<String> styles = Find.getStyleFiles("src/core/template");
+		//ArrayList<String> styles = Find.getStyleFiles("src/core/template");
+		ArrayList<String> styles = Find.getStyleFiles("src/../template");
 		
 		String insertContent = stringWithLines(converts);
 

@@ -21,7 +21,7 @@ public class NoteManager {
         this.noteDir = noteDir;
         this.outDir = outDir;
     }
-
+	
     public void searchAll(String query, boolean sensitive) throws IOException {
 		Path sourceRoot = this.noteDir;
 
@@ -61,8 +61,6 @@ public class NoteManager {
 	}
 
     public void merge(String first, String second) throws IOException {
-		// Path firstp = Find.find("./notes", first);
-		// Path secondp = Find.find("./notes", second);
         Path firstp = Find.find(this.noteDir.toString(), first);
         Path secondp = Find.find(this.noteDir.toString(), second);
 		
@@ -81,7 +79,6 @@ public class NoteManager {
 	}
 
     public void convertAll() throws IOException {
-        // Path targetRoot = Paths.get("mainnotes");
         Path sourceRoot = this.noteDir; 
 		Path targetRoot = this.outDir;
                 
@@ -115,7 +112,7 @@ public class NoteManager {
 
                 System.out.print("Processing \"" + sourcePath.toString() + "\"... ");
 				long startTime = System.nanoTime();
-				Write.writeToHTML(sourcePath, targetPath);
+				Write.writeToHTML(sourcePath, targetPath, sourceRoot);
 				long endTime = System.nanoTime();
 				double duration = (endTime - startTime) / 1000000d;
 				System.out.print("DONE! (Time: "+duration+" ms)\n");
