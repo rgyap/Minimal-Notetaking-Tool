@@ -18,17 +18,17 @@ public final class Convert {
     
     private static String[] tags = {
         "$$", "<h1>", "<h2>", "<h3>", "<h4>", "<h5>", "<h6>",
-        "<hr>", "<blockquote>", "<!--", "<div>", ">", "<pre>", "<ul>", "<ol>", "<table>", "<tr>"
+        "<hr>", "<blockquote>", "<div>", "<pre>", "<ul>", "<ol>", "<table>"
     }; 
     private static String[] tagsClose = {
         "$$", "</h1>", "</h2>", "</h3>", "</h4>", "</h5>", "</h6>",
-        "</hr>", "</blockquote>", "-->", "</div>", "</pre>", "</ul>", "</ol>", "</table>", "</tr>"
+        "</hr>", "</blockquote>", "</div>", "</pre>", "</ul>", "</ol>", "</table>"
     }; 
     private static HashSet<String> blacklistedTags = new HashSet<String>(Arrays.asList(tags));
     private static HashSet<String> blacklistedTagsClose = new HashSet<String>(Arrays.asList(tagsClose));
     
 	private static ArrayList<String> alignments = new ArrayList<String>(); // TABLE ALIGNMENTS
-    
+   
     public static final HashMap<String, String[]> forms = new HashMap<String, String[]>(Map.ofEntries(
         Map.entry("*", new String[]{"<i>", "</i>"}),
         Map.entry("**", new String[]{"<b>", "</b>"}),
@@ -41,13 +41,101 @@ public final class Convert {
         Map.entry("$", new String[]{"\\(", "\\)"}),
         Map.entry("$$", new String[]{"$$", "$$"})
     ));
+
+    public static ArrayList<String> convertNote(ArrayList<ArrayList<Character>> lines, Path currPath, Path root) {
+        ArrayList<String> result = new ArrayList<String>();
+
+        ArrayList<ArrayList<Character>> in0 = conv(lines, currPath, root);
+        ArrayList<ArrayList<Character>> in = processParagraphs(in0);
+        for (ArrayList<Character> clist : in) {
+            String test = "";
+            for (char c : clist) {
+                test = test + c;
+            }
+            result.add(test);
+        }
+        return result;
+    }
     
-    public static ArrayList<String> conv(ArrayList<ArrayList<Character>> lines, Path currPath, Path root) {
-        // A path is made into an argument so that I can deal with internal links.
+    public static ArrayList<ArrayList<Character>> processParagraphs(ArrayList<ArrayList<Character>> lines) {
+
+        // MAKE SURE that paragraphs have space ABOVE AND BELOW.
+
+        Stack<String> stg = new Stack<String>();
+        ArrayList<ArrayList<Character>> result  = new ArrayList<ArrayList<Character>>();
+
+        for (int i = 0; i < lines.size(); i++) {
+            ArrayList<Character> currentLine = lines.get(i);
+            if (currentLine.size() == 0) {
+                result.add(currentLine);
+                continue;
+            }
+
+            String test = "";
+            for (int j = 0; j < currentLine.size(); j++) {
+                if (j+1 < currentLine.size() && currentLine.get(j) == '<' && currentLine.get(j+1) != '/') {
+                    while (currentLine.get(j) != '>') {
+                        test = test + currentLine.get(j);
+                        j++;
+                    }
+                    test = test + '>';
+                }
+                if (blacklistedTags.contains(test)) {
+                    stg.push(test);
+                    test = "";
+                }
+            }
+
+            ArrayList<Character> prevLine = (i > 0) ? lines.get(i-1) : new ArrayList<Character>();
+            ArrayList<Character> nextLine = (i < lines.size()-1) ? lines.get(i+1) : new ArrayList<Character>();
+            if (prevLine.size() == 0 && stg.empty()) {
+                currentLine.add(0, '>');
+                currentLine.add(0, 'p');
+                currentLine.add(0, '<');
+            }
+
+            if (nextLine.size() == 0 && stg.empty()) {
+                currentLine.add('<');
+                currentLine.add('/');
+                currentLine.add('p');
+                currentLine.add('>');
+            } else {
+                if (nextLine.size() != 0) {
+                    if (stg.empty() || stg.contains("<blockquote>")) {
+                        currentLine.add('<');
+                        currentLine.add('b');
+                        currentLine.add('r');
+                        currentLine.add('>');    
+                    } 
+                }
+            } 
+            String testend = "";
+            for (int j = 0; j < currentLine.size(); j++) {
+                if (j+1 < currentLine.size() && currentLine.get(j) == '<' && currentLine.get(j+1) == '/') {
+                    while (currentLine.get(j) != '>') {
+                        testend = testend + currentLine.get(j);
+                        j++;
+                    }
+                    testend = testend + '>';
+                }
+
+                if (blacklistedTagsClose.contains(testend)) {
+                    stg.pop();
+                }
+                testend = "";
+            }
+
+            result.add(currentLine);
+        }
+        return result;
+    }
+
+
+    public static ArrayList<ArrayList<Character>> conv(ArrayList<ArrayList<Character>> lines, Path currPath, Path root) {
         
-        ArrayList<String> converts = new ArrayList<String>();
+        ArrayList<ArrayList<Character>> converts = new ArrayList<ArrayList<Character>>();
         
-        Stack<String> sst = new Stack<String>(); // FOR TEXT FORMATTING
+        Stack<String> sst = new Stack<String>(); // FOR FORMATTING
         Stack<Integer> sbq = new Stack<Integer>(); // FOR BLOCK QUOTE PROCESSING
         Stack<Integer> suo = new Stack<Integer>(); // FOR UNORDERED LISTS
         Stack<Integer> sor = new Stack<Integer>(); // FOR ORDERED LISTS
@@ -57,14 +145,14 @@ public final class Convert {
             ArrayList<Character> s = new ArrayList<>(lines.get(j)); 
 
             if (s.size() == 0) {
-                converts.add("");
+                converts.add(new ArrayList<Character>());
                 continue;    
             } 
             
             // Stack lookups are not constant time, but I think these stacks usually don't stack high.
             // Thus, I think I can get away with this. 
             boolean notFormattable = sst.contains("$") || sst.contains("$$") || sst.contains("`") || sst.contains("```");
-            
+           
             if (!notFormattable) { 
 
                 // headings
@@ -89,7 +177,9 @@ public final class Convert {
                 
                 // horizontal lines
                 if (threeOrMoreLineCharacters(s) && (s.get(0) == '-' || s.get(0) == '_')) {
-                    converts.add("<hr>");
+                    Character[] hrtag = {'<', 'h', 'r', '>'};
+                    ArrayList<Character> hrl = new ArrayList<Character>(Arrays.asList(hrtag));
+                    converts.add(hrl);
                     continue;
                 }
                 
@@ -125,30 +215,43 @@ public final class Convert {
             // formatting
             s = lineFormatting(s, sst);
 
-            String rrr = "";
-            for (char c : s) {
-                rrr = rrr + c;
-            }
-
-            converts.add(rrr);
+            converts.add(s);
         }
         
         // FIX CODEBLOCKS TYPED IN A CERTAIN WAY
         
         for (int j = 0; j < converts.size(); j++) {
-            if (converts.get(j).length() == 11 && converts.get(j).startsWith("<pre><code>") && j+1 < converts.size()) {
-                String next = converts.get(j+1);
-                next = "<pre><code>" + next;
+            String test = "";
+            for (char c : converts.get(j)) {
+                test = test + c;
+            }
+
+            if (test.equals("<pre><code>") && j+1 < converts.size()) {
+                ArrayList<Character> next = converts.get(j+1);
+                //next = "<pre><code>" + next;
+                next.add(0, '>');
+                next.add(0, 'e');
+                next.add(0, 'd');
+                next.add(0, 'o');
+                next.add(0, 'c');
+                next.add(0, '<');
+                
+                next.add(0, '>');
+                next.add(0, 'e');
+                next.add(0, 'r');
+                next.add(0, 'p');
+                next.add(0, '<');
+
                 converts.set(j+1, next);
-                converts.set(j, "");
+                converts.set(j, new ArrayList<Character>());
             }
         }
         
-        converts = processParagraphs(converts);
-
+        // converts = processParagraphs(converts);
+        
         return converts;
     }
-	
+
     private static ArrayList<Character> processTables(ArrayList<ArrayList<Character>> lines, ArrayList<Character> s, int index, Stack<Integer> stb) {
 		if (stb.empty()) {
 			alignments = new ArrayList<String>();
@@ -222,8 +325,6 @@ public final class Convert {
 					continue;
 				}
 				if (next.get(n) == ':') {
-					//boolean leftCheck = next.get(n+1) == '-' && (next.get(n-1) == ' ' || next.get(n-1) == '|');
-					//boolean rightCheck = next.get(n-1) == '-' && ((next.get(n+1) == ' ' && next.get(n+2) == '|') || next.get(n+1) == '|');
 					boolean leftCheck = next.get(n+1) == '-';
 					boolean rightCheck = next.get(n-1) == '-';
 					if (!leftCheck && !rightCheck) {
@@ -276,64 +377,7 @@ public final class Convert {
         return out;
     }
     
-    private static ArrayList<String> processParagraphs(ArrayList<String> strl) {
-        ArrayList<String> res = new ArrayList<String>(strl);
-        
-        if (strl.size() == 0) {
-            return strl;
-        }
-        
-        boolean active = true;
-        
-        String lastStart = "";
-        
-        for (int j = 0; j < res.size(); j++) {
-            String curr = res.get(j);
-            if (curr.length() == 0) {
-                continue;
-            }
-            
-            String startCurr = startsWithWhatTag(curr);
-            String endCurr = endsWithWhatClosingTag(curr);
-            
-            if (startCurr.length() != 0) {
-                active = false;
-                lastStart = startCurr;
-                if (endCurr.length() != 0) {
-                    active = true;
-                    continue;
-                }
-            }
-            
-            if (endCurr.length() != 0) {
-                active = true;
-                continue;
-            }
-            
-            String prev = (j-1 >= 0) ? res.get(j-1) : "";
-            if (active && (prev.length() == 0 || endsWithWhatClosingTag(prev).length() != 0)) {
-                curr = "<p>" + curr;
-            }
-                
-            String next = (j+1 < res.size()) ? res.get(j+1) : "";
-
-            boolean active2 = active || lastStart.equals("<blockquote>");
-            
-            if (next.length() != 0 && startsWithWhatTag(next).length() == 0 && active2) {
-                curr = curr + "<br>";
-            } else if (active) {
-                curr = curr + "</p>";
-            }
-
-            if (active2) {
-                res.set(j, curr);
-            }
-            
-        }
-        return res;
-    }
-
-    private static String startsWithWhatTag(String s) {
+    private static String startsWithTag(String s) {
         char[] arr = s.toCharArray();
         String test = "";
         for (int i = 0 ; i < arr.length ; i++) {
@@ -344,8 +388,19 @@ public final class Convert {
         }
         return "";
     }
+
+    private static boolean startsWithTagL(ArrayList<Character> list) {
+        String test = "";
+        for (int i = 0; i < list.size(); i++) {
+            test = test + list.get(i);
+            if (blacklistedTags.contains(test)) {
+                return true;
+            }
+        }
+        return false;
+    }
     
-    private static String endsWithWhatClosingTag(String str) {
+    private static String endsWithClosingTag(String str) {
         char[] arr = str.toCharArray();
         String test = "";
         for (int i = arr.length - 1; i >= 0; i--) {
@@ -441,7 +496,6 @@ public final class Convert {
             arr.add(String.valueOf(s.get(i)));
         }
         
-        //if (!nl && nnl && nextCount == currCount+1) {
         if (!nl && nextCount == currCount+1) {
             arr.add("<p>");
             for (int i = IND*nextCount; i < next.size(); i++) {
@@ -454,7 +508,7 @@ public final class Convert {
             } 
         }
         
-        if (cl && (!nl || nextCount <= currCount)) {
+        if (cl && ((nl && (nextCount <= currCount)) || (!nl && nnl && nextnextCount <= currCount))) {
             arr.add("</li>");
         }
         

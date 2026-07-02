@@ -59,7 +59,8 @@ In order to create a line break, just continue typing in the immediately next li
 This is a line.
 Followed by another,
 That is not separated
-By a paragraph break.
+By a paragraph break
+Or forced into a single line.
 ```
 
 When rendered, we get the following (placing inside a block quote for better visibility):
