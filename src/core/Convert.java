@@ -17,12 +17,10 @@ public final class Convert {
     }
     
     private static String[] tags = {
-        "$$", "<h1>", "<h2>", "<h3>", "<h4>", "<h5>", "<h6>",
-        "<hr>", "<blockquote>", "<div>", "<pre>", "<ul>", "<ol>", "<table>"
+        "$$", "<h1>", "<h2>", "<h3>", "<h4>", "<h5>", "<h6>", "<blockquote>", "<div>", "<pre>", "<ul>", "<ol>", "<table>"
     }; 
     private static String[] tagsClose = {
-        "$$", "</h1>", "</h2>", "</h3>", "</h4>", "</h5>", "</h6>",
-        "</hr>", "</blockquote>", "</div>", "</pre>", "</ul>", "</ol>", "</table>"
+        "$$", "</h1>", "</h2>", "</h3>", "</h4>", "</h5>", "</h6>", "</blockquote>", "</div>", "</pre>", "</ul>", "</ol>", "</table>"
     }; 
     private static HashSet<String> blacklistedTags = new HashSet<String>(Arrays.asList(tags));
     private static HashSet<String> blacklistedTagsClose = new HashSet<String>(Arrays.asList(tagsClose));
@@ -66,7 +64,14 @@ public final class Convert {
 
         for (int i = 0; i < lines.size(); i++) {
             ArrayList<Character> currentLine = lines.get(i);
-            if (currentLine.size() == 0) {
+			
+			String hrtest = "";
+			
+			for (char c : currentLine) {
+				hrtest = hrtest + c;
+			}
+			
+            if (currentLine.size() == 0 || hrtest.equals("<hr>")) {
                 result.add(currentLine);
                 continue;
             }
