@@ -22,6 +22,7 @@ public final class Convert {
     private static String[] tagsClose = {
         "$$", "</h1>", "</h2>", "</h3>", "</h4>", "</h5>", "</h6>", "</blockquote>", "</div>", "</pre>", "</ul>", "</ol>", "</table>"
     }; 
+	
     private static HashSet<String> blacklistedTags = new HashSet<String>(Arrays.asList(tags));
     private static HashSet<String> blacklistedTagsClose = new HashSet<String>(Arrays.asList(tagsClose));
     
@@ -93,27 +94,28 @@ public final class Convert {
 
             ArrayList<Character> prevLine = (i > 0) ? lines.get(i-1) : new ArrayList<Character>();
             ArrayList<Character> nextLine = (i < lines.size()-1) ? lines.get(i+1) : new ArrayList<Character>();
-            if (prevLine.size() == 0 && stg.empty()) {
-                currentLine.add(0, '>');
+			
+			if (stg.empty() && ((prevLine.size() == 0) || endsWithClosingTag(prevLine))) {
+				currentLine.add(0, '>');
                 currentLine.add(0, 'p');
                 currentLine.add(0, '<');
-            }
+			}
+			
+			boolean condition1 = stg.empty() && ((nextLine.size() == 0) || startsWithTagL(nextLine));
+			boolean condition2 = (nextLine.size() != 0) && (stg.empty() || stg.contains("<blockquote>"));
 
-            if (nextLine.size() == 0 && stg.empty()) {
+			if (condition1) {
                 currentLine.add('<');
                 currentLine.add('/');
                 currentLine.add('p');
                 currentLine.add('>');
-            } else {
-                if (nextLine.size() != 0) {
-                    if (stg.empty() || stg.contains("<blockquote>")) {
-                        currentLine.add('<');
-                        currentLine.add('b');
-                        currentLine.add('r');
-                        currentLine.add('>');    
-                    } 
-                }
-            } 
+			} else if (condition2) {
+				currentLine.add('<');
+				currentLine.add('b');
+				currentLine.add('r');
+				currentLine.add('>');  
+			}
+			
             String testend = "";
             for (int j = 0; j < currentLine.size(); j++) {
                 if (j+1 < currentLine.size() && currentLine.get(j) == '<' && currentLine.get(j+1) == '/') {
@@ -135,7 +137,6 @@ public final class Convert {
         return result;
     }
 
-
     public static ArrayList<ArrayList<Character>> conv(ArrayList<ArrayList<Character>> lines, Path currPath, Path root) {
         
         ArrayList<ArrayList<Character>> converts = new ArrayList<ArrayList<Character>>();
@@ -154,7 +155,7 @@ public final class Convert {
                 continue;    
             } 
             
-            // Stack lookups are not constant time, but I think these stacks usually don't stack high.
+            // Stack lookups are not O(1) but O(n) in time, but I think these stacks usually don't stack high.
             // Thus, I think I can get away with this. 
             boolean notFormattable = sst.contains("$") || sst.contains("$$") || sst.contains("`") || sst.contains("```");
            
@@ -200,7 +201,7 @@ public final class Convert {
                 if (s.get(0) == '|') {
                     s = processTables(lines, s, j, stb);
                 }
-                
+                 
                 // process blockquotes
                 if (s.size() >= 1 && s.get(0) == '>') {
                     s = processBlockQuotes(lines, s, j, sbq);
@@ -381,7 +382,7 @@ public final class Convert {
         }
         return out;
     }
-    
+    /*
     private static String startsWithTag(String s) {
         char[] arr = s.toCharArray();
         String test = "";
@@ -392,7 +393,7 @@ public final class Convert {
             }
         }
         return "";
-    }
+    }*/
 
     private static boolean startsWithTagL(ArrayList<Character> list) {
         String test = "";
@@ -404,7 +405,7 @@ public final class Convert {
         }
         return false;
     }
-    
+    /*
     private static String endsWithClosingTag(String str) {
         char[] arr = str.toCharArray();
         String test = "";
@@ -415,7 +416,18 @@ public final class Convert {
             }
         }
         return "";
-    }
+    }*/
+	
+	private static boolean endsWithClosingTag(ArrayList<Character> list) {
+		String test = "";
+		for (int i = list.size() - 1; i >= 0; i--) {
+			test = list.get(i) + test;
+			if (blacklistedTagsClose.contains(test)) {
+				return true;
+			}
+		}
+		return false;
+	}
 
     private static ArrayList<Character> processLists(ArrayList<ArrayList<Character>> lines, ArrayList<Character> s, int index, Stack<Integer> stack, boolean ordered) {
         

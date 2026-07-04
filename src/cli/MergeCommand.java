@@ -3,8 +3,6 @@ package src.cli;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 
-import src.core.NoteManager;
-
 public class MergeCommand implements Command {
 
     private NoteManager nm;

@@ -7,8 +7,6 @@ import java.util.Arrays;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 
-import src.core.NoteManager;
-
 public class NoteProcessor {
 
     private final Map<String, Command> commands = new HashMap<>();

@@ -1,4 +1,4 @@
-package src.core;
+package src.cli;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,6 +11,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Collections;
 
+import src.core.Find;
+import src.core.Read;
+import src.core.Write;
 
 public class NoteManager {
     

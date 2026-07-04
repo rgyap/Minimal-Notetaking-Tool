@@ -4,7 +4,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import src.cli.NoteProcessor;
-import src.core.NoteManager;
+import src.cli.NoteManager;
 
 public class Main {
 
