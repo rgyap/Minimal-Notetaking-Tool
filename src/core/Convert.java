@@ -101,9 +101,9 @@ public final class Convert {
                 currentLine.add(0, '<');
 			}
 			
-			boolean condition1 = stg.empty() && ((nextLine.size() == 0) || startsWithTagL(nextLine));
-			boolean condition2 = (nextLine.size() != 0) && (stg.empty() || stg.contains("<blockquote>"));
-
+			boolean condition1 = stg.empty() && ((nextLine.size() == 0) || startsWithTag(nextLine));
+			boolean condition2 = (nextLine.size() != 0) && (stg.empty() || stg.contains("<blockquote>")) && !endsWithClosingTag(currentLine);
+			
 			if (condition1) {
                 currentLine.add('<');
                 currentLine.add('/');
@@ -115,6 +115,7 @@ public final class Convert {
 				currentLine.add('r');
 				currentLine.add('>');  
 			}
+			
 			
             String testend = "";
             for (int j = 0; j < currentLine.size(); j++) {
@@ -382,20 +383,8 @@ public final class Convert {
         }
         return out;
     }
-    /*
-    private static String startsWithTag(String s) {
-        char[] arr = s.toCharArray();
-        String test = "";
-        for (int i = 0 ; i < arr.length ; i++) {
-            test = test + arr[i];
-            if (blacklistedTags.contains(test)) {
-                return test;
-            }
-        }
-        return "";
-    }*/
 
-    private static boolean startsWithTagL(ArrayList<Character> list) {
+    private static boolean startsWithTag(ArrayList<Character> list) {
         String test = "";
         for (int i = 0; i < list.size(); i++) {
             test = test + list.get(i);
@@ -405,18 +394,6 @@ public final class Convert {
         }
         return false;
     }
-    /*
-    private static String endsWithClosingTag(String str) {
-        char[] arr = str.toCharArray();
-        String test = "";
-        for (int i = arr.length - 1; i >= 0; i--) {
-            test = arr[i] + test;
-            if (blacklistedTagsClose.contains(test)) {
-                return test;
-            }
-        }
-        return "";
-    }*/
 	
 	private static boolean endsWithClosingTag(ArrayList<Character> list) {
 		String test = "";
