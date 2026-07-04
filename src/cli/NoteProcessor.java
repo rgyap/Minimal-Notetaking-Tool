@@ -11,9 +11,9 @@ public class NoteProcessor {
 
     private final Map<String, Command> commands = new HashMap<>();
 
-    public NoteProcessor(Path noteDir, Path outDir) {
+    public NoteProcessor(Path noteDir, Path outDir, int indentspaces) {
 
-        NoteManager nm = new NoteManager(noteDir, outDir);
+        NoteManager nm = new NoteManager(noteDir, outDir, indentspaces);
 
         commands.put("build", new BuildCommand(nm));
         commands.put("search", new SearchCommand(nm));

@@ -10,10 +10,10 @@ public class Main {
 
 	public static void main(String[] args) {
         Path target = Paths.get("src/../mainnotes");
-        Path source = Paths.get("src/../notes");  
+        Path source = Paths.get("src/../notes"); 
+		int indentspaces = 2;
 
-
-		NoteProcessor np = new NoteProcessor(source, target);
+		NoteProcessor np = new NoteProcessor(source, target, indentspaces);
 		np.issueCommand(args);
 	}
 

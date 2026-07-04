@@ -13,6 +13,10 @@ public class BuildCommand implements Command {
 
     @Override 
     public void execute(String[] args) throws Exception {
-        nm.convertAll();
+		try {
+			nm.convertAll();
+		} catch (Exception e) {
+			System.out.println(e);
+		}
     }
 }

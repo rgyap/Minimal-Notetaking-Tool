@@ -10,15 +10,16 @@ public final class Write {
     private Write() {
     }
 
-    public static void writeToHTML(Path path, Path targetPath, Path root) throws IOException {
+    public static void writeToHTML(Path path, Path targetPath, Path root, int indentspaces) throws IOException {
         List<String> lines = Files.readAllLines(Path.of("src/../template/note_template.html"));
 		
-		String fileName = path.toString();
+		String filepath = path.toString();
+		String filename = path.getFileName().toString();
+		String titlename = filename.substring(0, filename.length() - 3);
 
-		ArrayList<ArrayList<Character>> flines = Read.readFileLines(fileName);
-        ArrayList<String> converts = Convert.convertNote(flines, path.toAbsolutePath(), root);
-		
-		//ArrayList<String> styles = Find.getStyleFiles("src/core/template");
+		ArrayList<ArrayList<Character>> flines = Read.readFileLines(filepath);
+        ArrayList<String> converts = Convert.convertNote(flines, path.toAbsolutePath(), root, indentspaces);
+
 		ArrayList<String> styles = Find.getStyleFiles("src/../template");
 		
 		String insertContent = stringWithLines(converts);
@@ -34,6 +35,12 @@ public final class Write {
 					String stylelink = "<link rel='stylesheet' href='" + styles.get(i) + "'>";
 					result.append(stylelink).append("\n");
 				}
+			} else if (line.equals("7469746C65")) {
+				String titleTag = "<title>" + titlename + "</title>";
+				result.append(titleTag).append("\n");
+			} else if (line.equals("7469746C65206F6620646F63756D656E74")) {
+				String titleHeader = "<h1>" + titlename + "</h1>";
+				result.append(titleHeader).append("\n");
 			} else {
                 result.append(line).append("\n");
             }

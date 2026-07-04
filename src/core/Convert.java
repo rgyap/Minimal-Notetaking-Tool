@@ -17,10 +17,10 @@ public final class Convert {
     }
     
     private static String[] tags = {
-        "$$", "<h1>", "<h2>", "<h3>", "<h4>", "<h5>", "<h6>", "<blockquote>", "<div>", "<pre>", "<ul>", "<ol>", "<table>"
+        "\\[", "<h1>", "<h2>", "<h3>", "<h4>", "<h5>", "<h6>", "<blockquote>", "<div>", "<pre>", "<ul>", "<ol>", "<table>"
     }; 
     private static String[] tagsClose = {
-        "$$", "</h1>", "</h2>", "</h3>", "</h4>", "</h5>", "</h6>", "</blockquote>", "</div>", "</pre>", "</ul>", "</ol>", "</table>"
+        "\\]", "</h1>", "</h2>", "</h3>", "</h4>", "</h5>", "</h6>", "</blockquote>", "</div>", "</pre>", "</ul>", "</ol>", "</table>"
     }; 
 	
     private static HashSet<String> blacklistedTags = new HashSet<String>(Arrays.asList(tags));
@@ -38,13 +38,13 @@ public final class Convert {
         Map.entry("`", new String[]{"<code>", "</code>"}),
         Map.entry("```", new String[]{"<pre><code>", "</code></pre>"}),
         Map.entry("$", new String[]{"\\(", "\\)"}),
-        Map.entry("$$", new String[]{"$$", "$$"})
+        Map.entry("$$", new String[]{"\\[", "\\]"})
     ));
 
-    public static ArrayList<String> convertNote(ArrayList<ArrayList<Character>> lines, Path currPath, Path root) {
+    public static ArrayList<String> convertNote(ArrayList<ArrayList<Character>> lines, Path currPath, Path root, int IND) {
         ArrayList<String> result = new ArrayList<String>();
 
-        ArrayList<ArrayList<Character>> in0 = conv(lines, currPath, root);
+        ArrayList<ArrayList<Character>> in0 = conv(lines, currPath, root, IND);
         ArrayList<ArrayList<Character>> in = processParagraphs(in0);
         for (ArrayList<Character> clist : in) {
             String test = "";
@@ -79,18 +79,29 @@ public final class Convert {
 
             String test = "";
             for (int j = 0; j < currentLine.size(); j++) {
-                if (j+1 < currentLine.size() && currentLine.get(j) == '<' && currentLine.get(j+1) != '/') {
-                    while (currentLine.get(j) != '>') {
-                        test = test + currentLine.get(j);
-                        j++;
-                    }
-                    test = test + '>';
+                //if (j+1 < currentLine.size() && currentLine.get(j) == '<' && currentLine.get(j+1) != '/') {
+				//if (j+1 < currentLine.size() && ((currentLine.get(j) == '<' && currentLine.get(j+1) != '/') || (currentLine.get(j) == '\\' && currentLine.get(j+1) != '['))) {
+				if (j+1 < currentLine.size()) {
+					if (currentLine.get(j) == '<' && currentLine.get(j+1) != '/') {
+						while (j < currentLine.size() && currentLine.get(j) != '>') {
+							test = test + currentLine.get(j);
+							j++;
+						}
+						test = test + '>';
+					} else if (currentLine.get(j) == '\\' && currentLine.get(j+1) == '[') {
+						test = "\\[";
+						//j++;
+					}
                 }
                 if (blacklistedTags.contains(test)) {
+					//System.out.println("pushing, index: " + lines.get(i) + "," + j);
                     stg.push(test);
-                    test = "";
+                    test = ""; 
+					//System.out.println(stg);
                 }
             }
+			
+			//System.out.println("FIRST: " + stg);
 
             ArrayList<Character> prevLine = (i > 0) ? lines.get(i-1) : new ArrayList<Character>();
             ArrayList<Character> nextLine = (i < lines.size()-1) ? lines.get(i+1) : new ArrayList<Character>();
@@ -116,29 +127,46 @@ public final class Convert {
 				currentLine.add('>');  
 			}
 			
-			
             String testend = "";
             for (int j = 0; j < currentLine.size(); j++) {
-                if (j+1 < currentLine.size() && currentLine.get(j) == '<' && currentLine.get(j+1) == '/') {
-                    while (currentLine.get(j) != '>') {
-                        testend = testend + currentLine.get(j);
-                        j++;
-                    }
-                    testend = testend + '>';
+                //if (j+1 < currentLine.size() && currentLine.get(j) == '<' && currentLine.get(j+1) == '/') {
+				//if (j+1 < currentLine.size() && ((currentLine.get(j) == '<' && currentLine.get(j+1) == '/') || (currentLine.get(j) == '\\' && currentLine.get(j+1) == ']'))) {
+				if (j+1 < currentLine.size()) {
+					if (currentLine.get(j) == '<' && currentLine.get(j+1) == '/') {
+						while (j < currentLine.size() && currentLine.get(j) != '>') {
+							testend = testend + currentLine.get(j);
+							j++;
+						}
+						testend = testend + '>';
+					} else if (currentLine.get(j) == '\\' && currentLine.get(j+1) == ']') {
+						testend = "\\]";
+						j++;
+					}
                 }
 
-                if (blacklistedTagsClose.contains(testend)) {
+                if (blacklistedTagsClose.contains(testend) && !stg.empty()) {
                     stg.pop();
                 }
                 testend = "";
             }
-
+		
             result.add(currentLine);
         }
         return result;
     }
+	
+	public static boolean startsWithMathOrCode(ArrayList<Character> list) {
+		String test = "";
+		for (char c : list) {
+			test =  test + c;
+			if (test.equals("$$") || test.equals("```")) {
+				return true;
+			}
+		}
+		return false;
+	}
 
-    public static ArrayList<ArrayList<Character>> conv(ArrayList<ArrayList<Character>> lines, Path currPath, Path root) {
+    public static ArrayList<ArrayList<Character>> conv(ArrayList<ArrayList<Character>> lines, Path currPath, Path root, int IND) {
         
         ArrayList<ArrayList<Character>> converts = new ArrayList<ArrayList<Character>>();
         
@@ -159,8 +187,8 @@ public final class Convert {
             // Stack lookups are not O(1) but O(n) in time, but I think these stacks usually don't stack high.
             // Thus, I think I can get away with this. 
             boolean notFormattable = sst.contains("$") || sst.contains("$$") || sst.contains("`") || sst.contains("```");
-           
-            if (!notFormattable) { 
+
+            if (!notFormattable && !startsWithMathOrCode(s)) { 
 
                 // headings
                 if (s.get(0) == '#') {
@@ -209,12 +237,12 @@ public final class Convert {
                 }
                 
                 if (s.get(0) == '-' || !suo.empty()) {
-                    s = processLists(lines, s, j, suo, false);
+                    s = processLists(lines, s, j, suo, false, IND);
                 }
                 // ORDERED LISTS MUST START WITH "1."
                 
                 if ((1 < s.size() && Character.isDigit(s.get(0)) && s.get(1) == '.') || !sor.empty()) { 
-                    s = processLists(lines, s, j, sor, true);
+                    s = processLists(lines, s, j, sor, true, IND);
                 }
 
             } 
@@ -406,9 +434,9 @@ public final class Convert {
 		return false;
 	}
 
-    private static ArrayList<Character> processLists(ArrayList<ArrayList<Character>> lines, ArrayList<Character> s, int index, Stack<Integer> stack, boolean ordered) {
+    private static ArrayList<Character> processLists(ArrayList<ArrayList<Character>> lines, ArrayList<Character> s, int index, Stack<Integer> stack, boolean ordered, int IND) {
         
-        final int IND = 2; // Indentation
+        //final int IND = 2; // Indentation
         
         String xl = "<ul>";
         String xlc = "</ul>";
@@ -1148,11 +1176,16 @@ public final class Convert {
                 }
                 continue;
             } 
-            
-            if ((sst.contains("`") || sst.contains("```")) && s.get(i) == '<') {
-                res = res + "&lt;";
-                continue;
-            }
+
+			if (s.get(i) == '<') {
+				if (sst.contains("`") || sst.contains("```")) {
+					res = res + "&lt;";
+					continue;
+				} else if (sst.contains("$") || sst.contains("$$")) {
+					res = res + "\\lt ";
+					continue;
+				}
+			}
             
             res = res + s.get(i);
         } 

@@ -19,10 +19,12 @@ public class NoteManager {
     
     private final Path noteDir;
     private final Path outDir;
+	private final int indentspaces;
 
-    public NoteManager(Path noteDir, Path outDir) {
+    public NoteManager(Path noteDir, Path outDir, int indentspaces) {
         this.noteDir = noteDir;
         this.outDir = outDir;
+		this.indentspaces = indentspaces;
     }
 	
     public void searchAll(String query, boolean sensitive) throws IOException {
@@ -82,24 +84,24 @@ public class NoteManager {
 	}
 
     public void convertAll() throws IOException {
-        Path sourceRoot = this.noteDir; 
-		Path targetRoot = this.outDir;
+        //Path sourceRoot = this.noteDir; 
+		//Path targetRoot = this.outDir;
                 
-        if (Files.exists(targetRoot)) {
-            deleteContents(targetRoot);
+        if (Files.exists(this.outDir)) {
+            deleteContents(this.outDir);
         }
 
-        Files.walk(sourceRoot).forEach(sourcePath -> {
+        Files.walk(this.noteDir).forEach(sourcePath -> {
             try {
-                Path relativePath = sourceRoot.relativize(sourcePath);
+                Path relativePath = this.noteDir.relativize(sourcePath);
 
                 if (Files.isDirectory(sourcePath)) {
-                    Path targetPath = targetRoot.resolve(relativePath);
+                    Path targetPath = this.outDir.resolve(relativePath);
                     Files.createDirectories(targetPath);
 					return;
                 } 
 				
-                Path targetDir = targetRoot.resolve(relativePath).getParent();
+                Path targetDir = this.outDir.resolve(relativePath).getParent();
                 Files.createDirectories(targetDir);
                 
                 String originalName = sourcePath.getFileName().toString();
@@ -108,14 +110,15 @@ public class NoteManager {
 					Files.copy(sourcePath, targetDir.resolve(originalName), StandardCopyOption.REPLACE_EXISTING);
 					return;
                 }
-
+				
+				// Remove ".md" in the name
                 String newName = originalName.substring(0, originalName.length() - 3) + ".html";
 
                 Path targetPath = targetDir.resolve(newName);
 
                 System.out.print("Processing \"" + sourcePath.toString() + "\"... ");
 				long startTime = System.nanoTime();
-				Write.writeToHTML(sourcePath, targetPath, sourceRoot);
+				Write.writeToHTML(sourcePath, targetPath, this.noteDir, this.indentspaces);
 				long endTime = System.nanoTime();
 				double duration = (endTime - startTime) / 1000000d;
 				System.out.print("DONE! (Time: "+duration+" ms)\n");
