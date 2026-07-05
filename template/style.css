@@ -21,7 +21,26 @@ pre {
    
 }
 
-
 ol > li::marker {
 	content: counters(list-item,'.') '. ';
+}
+/*
+.axiom {
+    color: var(--color-accent);
+}*/
+
+.def {
+    /*color: var(--color-accent);*/
+    font-weight: bold;
+}
+
+.thm {
+	/*color: var(--color-accent);*/
+    font-weight: bold;
+}
+
+.qed {
+    /*color: var(--color-accent);*/
+    text-align: right;
+    font-weight: bold;
 }

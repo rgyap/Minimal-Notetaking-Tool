@@ -23,6 +23,8 @@ public final class Convert {
         "\\]", "</h1>", "</h2>", "</h3>", "</h4>", "</h5>", "</h6>", "</blockquote>", "</div>", "</pre>", "</ul>", "</ol>", "</table>"
     }; 
 	
+	 
+	
     private static HashSet<String> blacklistedTags = new HashSet<String>(Arrays.asList(tags));
     private static HashSet<String> blacklistedTagsClose = new HashSet<String>(Arrays.asList(tagsClose));
     
@@ -79,8 +81,6 @@ public final class Convert {
 
             String test = "";
             for (int j = 0; j < currentLine.size(); j++) {
-                //if (j+1 < currentLine.size() && currentLine.get(j) == '<' && currentLine.get(j+1) != '/') {
-				//if (j+1 < currentLine.size() && ((currentLine.get(j) == '<' && currentLine.get(j+1) != '/') || (currentLine.get(j) == '\\' && currentLine.get(j+1) != '['))) {
 				if (j+1 < currentLine.size()) {
 					if (currentLine.get(j) == '<' && currentLine.get(j+1) != '/') {
 						while (j < currentLine.size() && currentLine.get(j) != '>') {
@@ -90,18 +90,14 @@ public final class Convert {
 						test = test + '>';
 					} else if (currentLine.get(j) == '\\' && currentLine.get(j+1) == '[') {
 						test = "\\[";
-						//j++;
+						j++;
 					}
                 }
                 if (blacklistedTags.contains(test)) {
-					//System.out.println("pushing, index: " + lines.get(i) + "," + j);
                     stg.push(test);
                     test = ""; 
-					//System.out.println(stg);
                 }
             }
-			
-			//System.out.println("FIRST: " + stg);
 
             ArrayList<Character> prevLine = (i > 0) ? lines.get(i-1) : new ArrayList<Character>();
             ArrayList<Character> nextLine = (i < lines.size()-1) ? lines.get(i+1) : new ArrayList<Character>();
@@ -129,8 +125,6 @@ public final class Convert {
 			
             String testend = "";
             for (int j = 0; j < currentLine.size(); j++) {
-                //if (j+1 < currentLine.size() && currentLine.get(j) == '<' && currentLine.get(j+1) == '/') {
-				//if (j+1 < currentLine.size() && ((currentLine.get(j) == '<' && currentLine.get(j+1) == '/') || (currentLine.get(j) == '\\' && currentLine.get(j+1) == ']'))) {
 				if (j+1 < currentLine.size()) {
 					if (currentLine.get(j) == '<' && currentLine.get(j+1) == '/') {
 						while (j < currentLine.size() && currentLine.get(j) != '>') {
@@ -281,8 +275,6 @@ public final class Convert {
                 converts.set(j, new ArrayList<Character>());
             }
         }
-        
-        // converts = processParagraphs(converts);
         
         return converts;
     }
@@ -893,7 +885,11 @@ public final class Convert {
             out.add(c);
         }
         
-        out.add('<');out.add('/');out.add('h');out.add(hcchar);out.add('>');
+        out.add('<');
+		out.add('/');
+		out.add('h');
+		out.add(hcchar);
+		out.add('>');
         
         return out;
     }
@@ -1186,6 +1182,17 @@ public final class Convert {
 					continue;
 				}
 			}
+			
+			if (s.get(i) == '>') {
+				if (sst.contains("`") || sst.contains("```")) {
+					res = res + "&gt;";
+					continue;
+				} else if (sst.contains("$") || sst.contains("$$")) {
+					res = res + "\\gt ";
+					continue;
+				}
+			}
+			
             
             res = res + s.get(i);
         } 
