@@ -130,6 +130,46 @@ public class NoteManager {
         });
 	}
 	
+	public void generateIndexSite() throws IOException {
+		Files.walk(this.noteDir).forEach(sourcePath -> {
+            try {
+                Path relativePath = this.noteDir.relativize(sourcePath);
+
+                if (Files.isDirectory(sourcePath)) {
+                    Path targetPath = this.outDir.resolve(relativePath);
+                    Files.createDirectories(targetPath);
+					return;
+                } 
+				
+                Path targetDir = this.outDir.resolve(relativePath).getParent();
+                Files.createDirectories(targetDir);
+                
+                String originalName = sourcePath.getFileName().toString();
+
+                if (!(originalName.substring(originalName.length()-2).equals("md"))) {
+					Files.copy(sourcePath, targetDir.resolve(originalName), StandardCopyOption.REPLACE_EXISTING);
+					return;
+                }
+				
+				// Remove ".md" in the name
+                String newName = originalName.substring(0, originalName.length() - 3) + ".html";
+
+                Path targetPath = targetDir.resolve(newName);
+
+                System.out.print("Processing \"" + sourcePath.toString() + "\"... ");
+				long startTime = System.nanoTime();
+				Write.writeToHTML(sourcePath, targetPath, this.noteDir, this.indentspaces);
+				long endTime = System.nanoTime();
+				double duration = (endTime - startTime) / 1000000d;
+				System.out.print("DONE! (Time: "+duration+" ms)\n");
+                
+            } catch (IOException e) {
+				System.out.println("Uh oh!");
+                e.printStackTrace();
+            }
+        });
+	}
+	
 	/*
 		HELPER FUNCTIONS
 	*/
